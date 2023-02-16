@@ -18,3 +18,13 @@ After installation, follow these instructions to train a custom ESD model:
 * `python train-scripts/train-esd.py --prompt 'your prompt' --train_method 'your choice of training' --devices '0,1'`
 
 Note that the default argparser values must be changed!
+
+## Generating Images
+
+To generate images from one of the custom models use the following instructions:
+
+* To use `eval-scripts/generate-images.py` you would need a csv file with columns `prompt`, `evaluation_seed` and `case_number`. 
+* To generate multiple images per prompt use the argument `num_samples`. It is default to 10.
+* The path to model can be customised in the script.
+* It is to be noted that the current version requires the model to be in saved in `stable-diffusion/compvis-<based on hyperparameters>/diffusers-<based on hyperparameters>.pt`
+* `python eval-scripts/generate-images.py --model_name='compvis-word_VanGogh-method_xattn-sg_3-ng_1-iter_1000-lr_1e-05' --prompts_path 'stable-diffusion/art_prompts.csv' --save_path 'evaluation_folder'` 
