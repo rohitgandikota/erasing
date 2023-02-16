@@ -101,10 +101,10 @@ def plot_loss(losses, path,word, n=100):
 
 ##################### ESD Functions
 def get_models(config_path, ckpt_path, devices):
-    model_orig = load_model_from_config(config_path, ckpt_path, devices[0])
+    model_orig = load_model_from_config(config_path, ckpt_path, devices[1])
     sampler_orig = DDIMSampler(model_orig)
 
-    model = load_model_from_config(config_path, ckpt_path, devices[1])
+    model = load_model_from_config(config_path, ckpt_path, devices[0])
     sampler = DDIMSampler(model)
 
     return model_orig, sampler_orig, model, sampler
