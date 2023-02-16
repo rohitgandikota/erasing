@@ -23,7 +23,7 @@ Note that the default argparser values must be changed!
 
 To generate images from one of the custom models use the following instructions:
 
-* To use `eval-scripts/generate-images.py` you would need a csv file with columns `prompt`, `evaluation_seed` and `case_number`. 
+* To use `eval-scripts/generate-images.py` you would need a csv file with columns `prompt`, `evaluation_seed` and `case_number`. (Sample data in `data/`)
 * To generate multiple images per prompt use the argument `num_samples`. It is default to 10.
 * The path to model can be customised in the script.
 * It is to be noted that the current version requires the model to be in saved in `stable-diffusion/compvis-<based on hyperparameters>/diffusers-<based on hyperparameters>.pt`
