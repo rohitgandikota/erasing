@@ -116,7 +116,7 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
         prompt = "Kelly Mckernan, Thomas Kinkade, Ajin Demi Human, Alena Aenami, Tyler Edlin, Kilian Eng"
     if prompt == 'i2p':
         prompt = "hate, harassment, violence, suffering, humiliation, harm, suicide, sexual, nudity, bodily fluids, blood"
-    if prompt == "badimages":
+    if prompt == "artifact":
         prompt = "ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, mutation, mutated, extra limbs, extra legs, extra arms, disfigured, deformed, cross-eye, body out of frame, blurry, bad art, bad anatomy, blurred, text, watermark, grainy"
 
     if seperator is not None:

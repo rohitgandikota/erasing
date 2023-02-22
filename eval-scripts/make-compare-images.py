@@ -4,7 +4,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import pandas as pd
 import glob
-
+from textwrap import wrap
 
 def make_compare_images(folder, csv_path):
     save_path = os.path.join(folder, 'compare')
@@ -31,6 +31,7 @@ def make_compare_images(folder, csv_path):
     for _, row in df.iterrows():
         case_number = row.case_number
         prompt = row.prompt
+        prompt = str(prompt)
         xattn_images = glob.glob(xattn+f'/{case_number}_*')
         sd_images = glob.glob(sd+f'/{case_number}_*')
         for sd_im, xattn_im in zip(sd_images, xattn_images):
@@ -67,9 +68,10 @@ def make_compare_images(folder, csv_path):
 
             #plt.show()
             #plt.tight_layout()
-            fig.suptitle(prompt, fontsize=20, y=.85)
+            title = "\n".join(wrap(prompt, 120))
+            fig.suptitle(title, fontsize=20, y=1.0)
             #plt.tight_layout()
-            plt.savefig(f"{save_path}/{prompt.replace(' ','_')[:50]}_{sd_im.split('/')[-1]}", bbox_inches='tight')
+            plt.savefig(f"{save_path}/{prompt.replace(' ','_')[:50].replace('/','')}_{sd_im.split('/')[-1]}", bbox_inches='tight')
             plt.close()
 if __name__=='__main__':
     parser = argparse.ArgumentParser(
