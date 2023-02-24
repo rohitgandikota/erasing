@@ -36,20 +36,25 @@ def make_compare_images(folder, csv_path):
         sd_images = glob.glob(sd+f'/{case_number}_*')
         for sd_im, xattn_im in zip(sd_images, xattn_images):
             assert sd_im.split('/')[-1] == xattn_im.split('/')[-1]
-            selfattn_im = xattn_im.replace('xattn','selfattn')
+            #selfattn_im = xattn_im.replace('xattn','selfattn')
             noxattn_im = xattn_im.replace('xattn','noxattn')
-            full_im = xattn_im.replace('xattn','full')
-
+            #full_im = xattn_im.replace('xattn','full')
             fig = plt.figure(figsize = (25,7))
             plt.subplot(1,5,1)
             plt.imshow(Image.open(sd_im))
             plt.axis('off')
             plt.title('Original SD', fontsize=15)
-
+            
             plt.subplot(1,5,2)
-            plt.imshow(Image.open(full_im))
-            plt.axis('off')
-            plt.title('All Layers ESD', fontsize=15)
+            try:
+                plt.imshow(Image.open(full_im))
+                plt.axis('off')
+                plt.title('All Layers ESD', fontsize=15)
+            except: 
+                xlayer_im = xattn_im.replace('xattn','xlayer')
+                plt.imshow(Image.open(xlayer_im))
+                plt.axis('off')
+                plt.title('Xattn Layers ESD', fontsize=15)
 
             plt.subplot(1,5,3)
             plt.imshow(Image.open(noxattn_im))
@@ -57,10 +62,15 @@ def make_compare_images(folder, csv_path):
             plt.title('No XAttn ESD', fontsize=15)
 
             plt.subplot(1,5,4)
-            plt.imshow(Image.open(selfattn_im))
-            plt.axis('off')
-            plt.title('Self Attn ESD', fontsize=15)
-
+            try:
+                plt.imshow(Image.open(selfattn_im))
+                plt.axis('off')
+                plt.title('Self Attn ESD', fontsize=15)
+            except:
+                xlayer_im = xattn_im.replace('xattn','selflayer')
+                plt.imshow(Image.open(xlayer_im))
+                plt.axis('off')
+                plt.title('Selfattn Layers ESD', fontsize=15)
             plt.subplot(1,5,5)
             plt.imshow(Image.open(xattn_im))
             plt.axis('off')

@@ -109,7 +109,7 @@ def get_models(config_path, ckpt_path, devices):
 
     return model_orig, sampler_orig, model, sampler
 
-def train_esd(prompt, train_method, start_guidance, negative_guidance, iterations, lr, config_path, ckpt_path, diffusers_config_path, devices, seperator=None, image_size=512, ddim_steps=50, ddim_eta=0):
+def train_esd(prompt, train_method, start_guidance, negative_guidance, iterations, lr, config_path, ckpt_path, diffusers_config_path, devices, seperator=None, image_size=512, ddim_steps=50, ddim_eta=0, regularize=0):
     # PROMPT CLEANING
     word_print = prompt.replace(' ','')
     if prompt == 'allartist':
@@ -159,6 +159,16 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
             if not (name.startswith('out.') or 'time_embed' in name):
                 print(name)
                 parameters.append(param)
+        if train_method == 'xlayer':
+            if 'attn2' in name:
+                if 'input_blocks.4.' in name or 'input_blocks.7.' in name:
+                    print(name)
+                    parameters.append(param)
+        if train_method == 'selflayer':
+            if 'attn1' in name:
+                if 'input_blocks.4.' in name or 'input_blocks.7.' in name:
+                    print(name)
+                    parameters.append(param)
     # set model to train
     model.train()
     # create a lambda function for cleaner use of sampling code (only denoising till time step t)
@@ -201,6 +211,12 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
         e_p.requires_grad = False
 
         loss = criteria(e_n.to(devices[0]), e_0.to(devices[0]) - (negative_guidance*(e_p.to(devices[0]) - e_0.to(devices[0])))) #loss = criteria(e_n, e_0) works the best try 5000 epochs
+        if regularize>0:
+            l1 = torch.tensor(0., requires_grad=True).to(devices[0])
+            print('adding regularization')
+            for o, m in zip(model_orig.parameters(), model.parameters()):
+                l1 = l1 + (o.to(devices[0])-m).abs().sum()
+            loss = loss + regularize*l1
         loss.backward()
         losses.append(loss.item())
         pbar.set_postfix({"loss": loss.item()})
@@ -262,6 +278,7 @@ if __name__ == '__main__':
     parser.add_argument('--seperator', help='separator if you want to train bunch of words separately', type=str, required=False, default=None)
     parser.add_argument('--image_size', help='image size used to train', type=int, required=False, default=512)
     parser.add_argument('--ddim_steps', help='ddim steps of inference used to train', type=int, required=False, default=50)
+    parser.add_argument('--regularize', help='regularize used to train', type=float, required=False, default=0.0)
     args = parser.parse_args()
     
     prompt = args.prompt
@@ -278,4 +295,4 @@ if __name__ == '__main__':
     image_size = args.image_size
     ddim_steps = args.ddim_steps
 
-    train_esd(prompt=prompt, train_method=train_method, start_guidance=start_guidance, negative_guidance=negative_guidance, iterations=iterations, lr=lr, config_path=config_path, ckpt_path=ckpt_path, diffusers_config_path=diffusers_config_path, devices=devices, seperator=seperator, image_size=image_size, ddim_steps=ddim_steps, ddim_eta=0)
+    train_esd(prompt=prompt, train_method=train_method, start_guidance=start_guidance, negative_guidance=negative_guidance, iterations=iterations, lr=lr, config_path=config_path, ckpt_path=ckpt_path, diffusers_config_path=diffusers_config_path, devices=devices, seperator=seperator, image_size=image_size, ddim_steps=ddim_steps, ddim_eta=0, regularize = args.regularize)
