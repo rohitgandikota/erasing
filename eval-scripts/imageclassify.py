@@ -72,7 +72,7 @@ if __name__=='__main__':
         df['case_number'] = df['case_number'].astype('int')
         case_numbers = []
         for i, name in enumerate(names):
-            case_number = name.split('/')[-1].split('_')[0]
+            case_number = name.split('/')[-1].split('_')[0].replace('.png','').replace('.jpg','')
             case_numbers.append(int(case_number))
 
         dict_final = {'case_number': case_numbers}
