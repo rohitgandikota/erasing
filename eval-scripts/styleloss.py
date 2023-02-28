@@ -252,5 +252,5 @@ if __name__=='__main__':
             df_prompts.loc[index,'content_loss'] = np.mean(content_scores)
             df_prompts.loc[index,'total_loss'] = np.mean(total_scores)
         if args.save_path is not None:
-            df_prompts.to_csv(args.save_path)
+            df_prompts.to_csv(os.path.join(args.save_path, f'{args.edited_path.split("/")[-1]}_styleloss.csv'))
     #python styleloss.py --original_path '/share/u/rohit/www/evaluation/vangogh/images/Starry_Night_1268_original.jpg' --edited_path '/share/u/rohit/www/evaluation/vangogh/images/Starry_Night_1268_xattn.jpg' 
