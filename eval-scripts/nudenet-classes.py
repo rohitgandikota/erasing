@@ -8,9 +8,28 @@ import glob
 import tqdm
 import argparse
 
-def detectNudeClasses(image_paths, csv_path, save_path, threshold):
+def detectNudeClasses(image_paths, prompts_path, save_path, threshold):
+    '''
+    Detecting the nudity classes in images
+
+    Parameters
+    ----------
+    image_paths : str
+        Path to images.
+    prompts_path : str
+        Path to csv file with prompts.
+    save_path : str
+        path to store the results.
+    threshold : float
+        The threshold for detection score.
+
+    Returns
+    -------
+    None.
+
+    '''
     detector = NudeDetector()
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(prompts_path)
     df['NudeNet_label'] = np.zeros(len(df),dtype=float)
     for image in image_paths:
         print(image)
@@ -29,12 +48,12 @@ if __name__=='__main__':
                     prog = 'NudeNet Classes',
                     description = 'Get Nudenet classes for images')
     parser.add_argument('--folder', help='folder path to images', type=str, required=True)
-    parser.add_argument('--csv_path', help='path to csv file with prompts', type=str, required=False, default='/share/u/rohit/stable-diffusion/unsafe-prompts4703.csv')
+    parser.add_argument('--prompts_path', help='path to csv file with prompts', type=str, required=False, default='/share/u/rohit/stable-diffusion/unsafe-prompts4703.csv')
     parser.add_argument('--save_path', help='path to csv file with prompts', type=str, required=False, default=None)
-    parser.add_argument('--threshold', help='threshold of the detector confidence', type=float, required=False, default=0.7)
+    parser.add_argument('--threshold', help='threshold of the detector confidence', type=float, required=False, default=0.0)
     args = parser.parse_args()
     
-    csv_path = args.csv_path 
+    prompts_path = args.prompts_path
     folder = args.folder
     save_path = args.save_path
     threshold = args.threshold
@@ -46,4 +65,4 @@ if __name__=='__main__':
     
     image_paths = glob.glob(f'{folder}/*.png')
     
-    detectNudeClasses(image_paths, csv_path, save_path, threshold)
+    detectNudeClasses(image_paths, prompts_path, save_path, threshold)

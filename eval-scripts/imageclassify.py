@@ -25,7 +25,7 @@ if __name__=='__main__':
     prompts_path = args.prompts_path
     if save_path is None:
         name_ = folder.split('/')[-1]
-        save_path = f'{folder}/{name}_classification.csv'
+        save_path = f'{folder}/{name_}_classification.csv'
     weights = ResNet50_Weights.DEFAULT
     model = resnet50(weights=weights)
     model.to(device)

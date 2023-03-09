@@ -206,7 +206,7 @@ if __name__=='__main__':
                     description = 'Takes the path to two images and gives Style and Content Loss. 0 means identical')
     parser.add_argument('--original_path', help='path to original image', type=str, required=True)
     parser.add_argument('--edited_path', help='path to edited image', type=str, required=True)
-    parser.add_argument('--csv_path', help='path to csv prompts', type=str, required=True)
+    parser.add_argument('--promtps_path', help='path to csv prompts', type=str, required=True)
     parser.add_argument('--save_path', help='path to save results', type=str, required=False, default=None)
     parser.add_argument(
         "--image",
@@ -216,41 +216,48 @@ if __name__=='__main__':
 
     args = parser.parse_args()
     if args.image:
+        #read original and edited images
         original = image_loader(args.original_path)
         edited = image_loader(args.edited_path)
-
+        # compute style, content and total score
         style_score, content_score, total_score = get_style_content_loss(cnn, cnn_normalization_mean, cnn_normalization_std,
                                     content_img=original, style_img=original, input_img=edited)
+        # save the results
         if args.save_path is not None:
             df = pd.DataFrame({'filename': [args.edited_path.split('/')[-1]], 'Style_Loss': [style_score], 'Content_Loss': [content_score], 'Total_Loss': [total_score]})
             df.to_csv(args.save_path)
     else:
+        # read the image filenames in the folder
         file_names = os.listdir(args.original_path)
         file_names = [name for name in file_names if '.png' in name]
-        df_prompts = pd.read_csv(args.csv_path)
-        
+        # read the prompts csv
+        df_prompts = pd.read_csv(args.promtps_path)
+        # initialise columns to store the losses
         df_prompts['style_loss'] = df_prompts['case_number'] *0
         df_prompts['content_loss'] = df_prompts['case_number']*0
         df_prompts['total_loss'] = df_prompts['case_number']*0
+        # iter through all the rows
         for index, row in df_prompts.iterrows():
+            # get case number for image reference
             case_number = row.case_number
             files = [file for file in file_names if file.startswith(f'{case_number}_')]
             style_scores = []
             content_scores = []
             total_scores = []
             for file in files:
+                # read original image and corresponding edited image 
                 original = image_loader(os.path.join(args.original_path,file))
                 edited = image_loader(os.path.join(args.edited_path,file))
-
+                # compute losses
                 style_score, content_score, total_score = get_style_content_loss(cnn, cnn_normalization_mean, cnn_normalization_std,
                                             content_img=original, style_img=original, input_img=edited)
             
                 style_scores.append(style_score)
                 content_scores.append(content_score)
                 total_scores.append(total_score)
+            # store the results in csv (by averaging it over images per prompt)
             df_prompts.loc[index,'style_loss'] = np.mean(style_scores)
             df_prompts.loc[index,'content_loss'] = np.mean(content_scores)
             df_prompts.loc[index,'total_loss'] = np.mean(total_scores)
         if args.save_path is not None:
             df_prompts.to_csv(os.path.join(args.save_path, f'{os.path.basename(args.edited_path)}_styleloss.csv'))
-    #python styleloss.py --original_path '/share/u/rohit/www/evaluation/vangogh/images/Starry_Night_1268_original.jpg' --edited_path '/share/u/rohit/www/evaluation/vangogh/images/Starry_Night_1268_xattn.jpg' 
