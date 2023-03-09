@@ -32,6 +32,7 @@ The optimization process for erasing undesired visual concepts from pre-trained 
 <div align='center'>
 <img src = 'images/ESD.png'>
 </div>
+
 ## Generating Images
 
 To generate images from one of the custom models use the following instructions:
