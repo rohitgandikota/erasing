@@ -77,13 +77,6 @@ def load_img(path, target_size=512):
     image = tform(image)
     return 2.*image - 1.
 
-def decode_to_im(samples, n_samples=1, nrow=1):
-    """Decode a latent and return PIL image"""
-    samples = model.decode_first_stage(samples)
-    ims = torch.clamp((samples + 1.0) / 2.0, min=0.0, max=1.0)
-    x_sample = 255. * rearrange(ims.cpu().numpy(), '(n1 n2) c h w -> (n1 h) (n2 w) c', n1=n_samples//nrow, n2=nrow)
-    return Image.fromarray(x_sample.astype(np.uint8))
-
 
 def moving_average(a, n=3) :
     ret = np.cumsum(a, dtype=float)
@@ -109,7 +102,44 @@ def get_models(config_path, ckpt_path, devices):
 
     return model_orig, sampler_orig, model, sampler
 
-def train_esd(prompt, train_method, start_guidance, negative_guidance, iterations, lr, config_path, ckpt_path, diffusers_config_path, devices, seperator=None, image_size=512, ddim_steps=50, ddim_eta=0, regularize=0):
+def train_esd(prompt, train_method, start_guidance, negative_guidance, iterations, lr, config_path, ckpt_path, diffusers_config_path, devices, seperator=None, image_size=512, ddim_steps=50):
+    '''
+    Function to train diffusion models to erase concepts from model weights
+
+    Parameters
+    ----------
+    prompt : str
+        The concept to erase from diffusion model (Eg: "Van Gogh").
+    train_method : str
+        The parameters to train for erasure (ESD-x, ESD-u, full, selfattn).
+    start_guidance : float
+        Guidance to generate images for training.
+    negative_guidance : float
+        Guidance to erase the concepts from diffusion model.
+    iterations : int
+        Number of iterations to train.
+    lr : float
+        learning rate for fine tuning.
+    config_path : str
+        config path for compvis diffusion format.
+    ckpt_path : str
+        checkpoint path for pre-trained compvis diffusion weights.
+    diffusers_config_path : str
+        Config path for diffusers unet in json format.
+    devices : str
+        2 devices used to load the models (Eg: '0,1' will load in cuda:0 and cuda:1).
+    seperator : str, optional
+        If the prompt has commas can use this to seperate the prompt for individual simulataneous erasures. The default is None.
+    image_size : int, optional
+        Image size for generated images. The default is 512.
+    ddim_steps : int, optional
+        Number of diffusion time steps. The default is 50.
+
+    Returns
+    -------
+    None
+
+    '''
     # PROMPT CLEANING
     word_print = prompt.replace(' ','')
     if prompt == 'allartist':
@@ -125,7 +155,7 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
     else:
         words = [prompt]
     print(words)
-
+    ddim_eta = 0
     # MODEL TRAINING SETUP
 
     model_orig, sampler_orig, model, sampler = get_models(config_path, ckpt_path, devices)
@@ -186,6 +216,7 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
     pbar = tqdm(range(iterations))
     for i in pbar:
         word = random.sample(words,1)[0]
+        # get text embeddings for unconditional and conditional prompts
         emb_0 = model.get_learned_conditioning([''])
         emb_p = model.get_learned_conditioning([word])
         emb_n = model.get_learned_conditioning([f'{word}'])
@@ -202,27 +233,25 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
         start_code = torch.randn((1, 4, 64, 64)).to(devices[0])
 
         with torch.no_grad():
+            # generate an image with the concept from ESD model
             z = quick_sample_till_t(emb_p.to(devices[0]), start_guidance, start_code, int(t_enc)) # emb_p seems to work better instead of emb_0
+            # get conditional and unconditional scores from frozen model at time step t and image z
             e_0 = model_orig.apply_model(z.to(devices[1]), t_enc_ddpm.to(devices[1]), emb_0.to(devices[1]))
             e_p = model_orig.apply_model(z.to(devices[1]), t_enc_ddpm.to(devices[1]), emb_p.to(devices[1]))
         # breakpoint()
+        # get conditional score from ESD model
         e_n = model.apply_model(z.to(devices[0]), t_enc_ddpm.to(devices[0]), emb_n.to(devices[0]))
         e_0.requires_grad = False
         e_p.requires_grad = False
-
+        # reconstruction loss for ESD objective from frozen model and conditional score of ESD model
         loss = criteria(e_n.to(devices[0]), e_0.to(devices[0]) - (negative_guidance*(e_p.to(devices[0]) - e_0.to(devices[0])))) #loss = criteria(e_n, e_0) works the best try 5000 epochs
-        if regularize>0:
-            l1 = torch.tensor(0., requires_grad=True).to(devices[0])
-            print('adding regularization')
-            for o, m in zip(model_orig.parameters(), model.parameters()):
-                l1 = l1 + (o.to(devices[0])-m).abs().sum()
-            loss = loss + regularize*l1
+        # update weights to erase the concept
         loss.backward()
         losses.append(loss.item())
         pbar.set_postfix({"loss": loss.item()})
         history.append(loss.item())
         opt.step()
-
+        # save checkpoint and loss curve
         if (i+1) % 500 == 0 and i+1 != iterations and i+1>= 500:
             save_model(model, name, i-1, save_compvis=True, save_diffusers=False)
 
@@ -233,8 +262,6 @@ def train_esd(prompt, train_method, start_guidance, negative_guidance, iteration
 
     save_model(model, name, None, save_compvis=True, save_diffusers=True, compvis_config_file=config_path, diffusers_config_file=diffusers_config_path)
     save_history(losses, name, word_print)
-
-    return model
 
 def save_model(model, name, num, compvis_config_file=None, diffusers_config_file=None, device='cpu', save_compvis=True, save_diffusers=True):
     # SAVE MODEL
@@ -271,14 +298,13 @@ if __name__ == '__main__':
     parser.add_argument('--negative_guidance', help='guidance of negative training used to train', type=float, required=False, default=1)
     parser.add_argument('--iterations', help='iterations used to train', type=int, required=False, default=1000)
     parser.add_argument('--lr', help='learning rate used to train', type=int, required=False, default=1e-5)
-    parser.add_argument('--config_path', help='config path for stable diffusion v1-4 inference', type=str, required=False, default='/share/u/rohit/stable-diffusion/configs/stable-diffusion/v1-inference.yaml')
-    parser.add_argument('--ckpt_path', help='ckpt path for stable diffusion v1-4', type=str, required=False, default='/share/u/rohit/stable-diffusion/models/ldm/stable-diffusion-v1/sd-v1-4-full-ema.ckpt')
-    parser.add_argument('--diffusers_config_path', help='diffusers unet config json path', type=str, required=False, default='/share/u/rohit/stable-diffusion/diffusers_unet_config.json')
+    parser.add_argument('--config_path', help='config path for stable diffusion v1-4 inference', type=str, required=False, default='configs/stable-diffusion/v1-inference.yaml')
+    parser.add_argument('--ckpt_path', help='ckpt path for stable diffusion v1-4', type=str, required=False, default='models/ldm/stable-diffusion-v1/sd-v1-4-full-ema.ckpt')
+    parser.add_argument('--diffusers_config_path', help='diffusers unet config json path', type=str, required=False, default='diffusers_unet_config.json')
     parser.add_argument('--devices', help='cuda devices to train on', type=str, required=False, default='0,0')
     parser.add_argument('--seperator', help='separator if you want to train bunch of words separately', type=str, required=False, default=None)
     parser.add_argument('--image_size', help='image size used to train', type=int, required=False, default=512)
     parser.add_argument('--ddim_steps', help='ddim steps of inference used to train', type=int, required=False, default=50)
-    parser.add_argument('--regularize', help='regularize used to train', type=float, required=False, default=0.0)
     args = parser.parse_args()
     
     prompt = args.prompt
@@ -295,4 +321,4 @@ if __name__ == '__main__':
     image_size = args.image_size
     ddim_steps = args.ddim_steps
 
-    train_esd(prompt=prompt, train_method=train_method, start_guidance=start_guidance, negative_guidance=negative_guidance, iterations=iterations, lr=lr, config_path=config_path, ckpt_path=ckpt_path, diffusers_config_path=diffusers_config_path, devices=devices, seperator=seperator, image_size=image_size, ddim_steps=ddim_steps, ddim_eta=0, regularize = args.regularize)
+    train_esd(prompt=prompt, train_method=train_method, start_guidance=start_guidance, negative_guidance=negative_guidance, iterations=iterations, lr=lr, config_path=config_path, ckpt_path=ckpt_path, diffusers_config_path=diffusers_config_path, devices=devices, seperator=seperator, image_size=image_size, ddim_steps=ddim_steps)
