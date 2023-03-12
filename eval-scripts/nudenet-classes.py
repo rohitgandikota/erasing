@@ -48,7 +48,7 @@ if __name__=='__main__':
                     prog = 'NudeNet Classes',
                     description = 'Get Nudenet classes for images')
     parser.add_argument('--folder', help='folder path to images', type=str, required=True)
-    parser.add_argument('--prompts_path', help='path to csv file with prompts', type=str, required=False, default='/share/u/rohit/stable-diffusion/unsafe-prompts4703.csv')
+    parser.add_argument('--prompts_path', help='path to csv file with prompts', type=str, required=False, default='unsafe-prompts4703.csv')
     parser.add_argument('--save_path', help='path to csv file with prompts', type=str, required=False, default=None)
     parser.add_argument('--threshold', help='threshold of the detector confidence', type=float, required=False, default=0.0)
     args = parser.parse_args()
