@@ -785,8 +785,8 @@ def convert_open_clip_checkpoint(checkpoint):
 def savemodelDiffusers(name, compvis_config_file, diffusers_config_file, device='cpu'):
     checkpoint_path = f'models/{name}/{name}.pt'
 
-    original_config_file = compvis_config_file#'/share/u/rohit/stable-diffusion/configs/stable-diffusion/v1-inference.yaml'
-    config_file = diffusers_config_file#'/share/u/rohit/stable-diffusion/diffusers_unet_config.json'
+    original_config_file = compvis_config_file
+    config_file = diffusers_config_file
     num_in_channels = 4
     scheduler_type = 'ddim'
     pipeline_type = None
