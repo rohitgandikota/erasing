@@ -1,7 +1,7 @@
 # Erasing Concepts from Diffusion Models
 
- Project Website [https://erasing.baulab.info](https://erasing.baulab.info)
- Arxiv Preprint  [pdf](https://arxiv.org/pdf/2303.07345.pdf)
+ Project Website [https://erasing.baulab.info](https://erasing.baulab.info) <br>
+ Arxiv Preprint  [https://arxiv.org/pdf/2303.07345.pdf](https://arxiv.org/pdf/2303.07345.pdf)
 
 <div align='center'>
 <img src = 'images/applications.png'>
