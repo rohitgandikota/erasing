@@ -13,7 +13,9 @@ To evaluate artistic style removal, we conduct experiments erasing five modern a
 
 Given only a short text description of an undesired visual concept and no additional data, our method fine-tunes model weights to erase the targeted concept. Our method can avoid NSFW content, stop imitation of a specific artist's style, or even erase a whole object class from model output, while preserving the model's behavior and capabilities on other topics.
 
+## Fine-tuned Weights
 
+The finetuned weights for both NSFW and art style erasures are available on our [project page](https://erasing.baulab.info).
 
 ## Installation Guide
 
