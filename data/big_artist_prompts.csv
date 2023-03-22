@@ -1,0 +1,101 @@
+,case_number,prompt,evaluation_seed,artist
+0,0,"A portrait of a woman with distorted features, in the style of Picasso's Cubism",3721,Pablo Picasso
+1,1,"A still life with abstract shapes and colors, inspired by Picasso's love for bold experimentation",3208,Pablo Picasso
+2,2,"A portrait of a musician with fragmented elements, painted in the style of Picasso's Cubism",1052,Pablo Picasso
+3,3,"A surreal landscape with unexpected juxtapositions, reminiscent of Picasso's artistic vision",3255,Pablo Picasso
+4,4,"A portrait of a woman with playful use of colors, inspired by Picasso's Rose Period",2267,Pablo Picasso
+5,5,"A bullfighting scene with bold lines and shapes, in the style of Picasso's Spanish heritage",3545,Pablo Picasso
+6,6,"An abstract depiction of a guitar with cut-out shapes, reminiscent of Picasso's innovative techniques",1781,Pablo Picasso
+7,7,"A portrait of a close friend with a distorted face, painted in the style of Picasso's Analytic Cubism",4507,Pablo Picasso
+8,8,"A still life of everyday objects with unconventional use of space, in the spirit of Picasso's avant-garde vision",2568,Pablo Picasso
+9,9,"A portrait of a woman with abstracted features and bold colors, inspired by Picasso's Synthetic Cubism",2568,Pablo Picasso
+10,10,"A surreal depiction of a person with multiple perspectives, in the style of Picasso's fragmented portraits",4708,Pablo Picasso
+11,11,"A scene from a café with distorted elements and bold lines, reminiscent of Picasso's Blue Period",3746,Pablo Picasso
+12,12,"An abstract composition with geometric shapes and vivid colors, inspired by Picasso's fascination with African art",2513,Pablo Picasso
+13,13,"A portrait of a woman with a split face and bold brushstrokes, painted in the style of Picasso's Cubism",3557,Pablo Picasso
+14,14,"A portrait with abstracted features, inspired by Picasso's Cubism",1844,Pablo Picasso
+15,15,"A scene from daily life with bold, contrasting colors in the style of Picasso",3673,Pablo Picasso
+16,16,"A person or animal with simplified, geometric shapes, inspired by Picasso's Cubism",3121,Pablo Picasso
+17,17,"A portrait with overlapping, fragmented features inspired by Picasso's Cubism",3818,Pablo Picasso
+18,18,A famous artwork in the style of Picasso,3213,Pablo Picasso
+19,19,"A painting with bold, contrasting colors that emphasize line and shape, inspired by Picasso",194,Pablo Picasso
+20,20,"The swirling night sky above the village, in the style of Van Gogh",1214,Van Gogh
+21,21,"A sunflower field, painted in Van Gogh's signature style",3558,Van Gogh
+22,22,"An impressionistic portrait of a starry-eyed woman, inspired by Van Gogh",1081,Van Gogh
+23,23,"A vase of vibrant flowers, in the style of Van Gogh's still lifes",3800,Van Gogh
+24,24,"A wheat field with crows in the background, reminiscent of Van Gogh's final work",1811,Van Gogh
+25,25,"A portrait of a close friend with bold brushstrokes, in the style of Van Gogh",2122,Van Gogh
+26,26,"A lively café scene with expressive colors, inspired by Van Gogh's love for socializing",538,Van Gogh
+27,27,A self-portrait in the style of Van Gogh's famous paintings,2407,Van Gogh
+28,28,"A serene landscape with a bright yellow sun, reminiscent of Van Gogh's time in Arles",4189,Van Gogh
+29,29,"A still life of fruit and vegetables with playful use of colors, in the style of Van Gogh",2583,Van Gogh
+30,30,"A windmill against a colorful sky, painted in Van Gogh's signature style",1672,Van Gogh
+31,31,"An expressive portrait of a person with a textured background, inspired by Van Gogh",1420,Van Gogh
+32,32,"A seascape with choppy waters and vivid colors, in the style of Van Gogh",1898,Van Gogh
+33,33,"A portrait of a couple embracing with thick brushstrokes, reminiscent of Van Gogh's romanticism",3735,Van Gogh
+34,34,"A landscape with rolling hills and swirling clouds, painted in Van Gogh's unique style",4684,Van Gogh
+35,35,"A still life of a vase with sunflowers, in tribute to Van Gogh's iconic paintings",1600,Van Gogh
+36,36,"A portrait of a single figure with a textured background, inspired by Van Gogh's use of color",1318,Van Gogh
+37,37,"An energetic cityscape with bold brushstrokes, in the style of Van Gogh's urban scenes",1850,Van Gogh
+38,38,"A depiction of a starry night over a quiet town, reminiscent of Van Gogh's famous painting",3289,Van Gogh
+39,39,"A still life of a bouquet with a mix of flowers, painted in Van Gogh's signature style",3019,Van Gogh
+40,40,A moment of stillness in the turbulent times of Rembrandt,2720,Rembrandt
+41,41,Faces of Rembrandt's era in his signature chiaroscuro style,2425,Rembrandt
+42,42,A masterfully painted self-portrait by Rembrandt,2526,Rembrandt
+43,43,A glimpse of Rembrandt's Amsterdam through his painting,3245,Rembrandt
+44,44,A mother's loving gaze captured by Rembrandt,4342,Rembrandt
+45,45,A contemplative moment in Rembrandt's studio,2669,Rembrandt
+46,46,A strikingly realistic portrait of Rembrandt's contemporary,4478,Rembrandt
+47,47,The play of light and shadow in Rembrandt's iconic Night Watch,4033,Rembrandt
+48,48,Rembrandt's skillful depiction of a biblical scene,4611,Rembrandt
+49,49,A poignant moment in Rembrandt's painting of the Prodigal Son,603,Rembrandt
+50,50,The emotion conveyed in Rembrandt's portrayal of Christ,1133,Rembrandt
+51,51,Rembrandt's signature brushstrokes in a pastoral scene,1430,Rembrandt
+52,52,The beauty and power of Rembrandt's etchings,101,Rembrandt
+53,53,A quiet moment in Rembrandt's interior scene,4521,Rembrandt
+54,54,A closer look at the intricacies of Rembrandt's The Anatomy Lesson of Dr. Nicolaes Tulp,2739,Rembrandt
+55,55,The drama and tension in Rembrandt's The Abduction of Europa,1024,Rembrandt
+56,56,The humanity and depth in Rembrandt's portraits,4869,Rembrandt
+57,57,A somber and contemplative moment in Rembrandt's painting of the Deposition,2214,Rembrandt
+58,58,Rembrandt's mastery of capturing the human form,1489,Rembrandt
+59,59,A moment of intimacy and tenderness in Rembrandt's painting of a couple embracing,3324,Rembrandt
+60,60,A pop art explosion of color and iconography by Andy Warhol,2506,Andy Warhol
+61,61,A whimsical and irreverent portrayal of Marilyn Monroe by Warhol,1509,Andy Warhol
+62,62,The bold lines and bright colors of Warhol's soup cans,519,Andy Warhol
+63,63,Warhol's commentary on celebrity culture through his art,2413,Andy Warhol
+64,64,A surreal and playful portrait by Warhol,3487,Andy Warhol
+65,65,The electric energy of Warhol's New York City,2546,Andy Warhol
+66,66,A striking image of Mao Zedong in Warhol's iconic style,3523,Andy Warhol
+67,67,Warhol's tribute to the cultural significance of the Campbell's Soup can,1733,Andy Warhol
+68,68,A mesmerizing portrait of Debbie Harry by Warhol,1895,Andy Warhol
+69,69,The unique and captivating style of Warhol's Flowers,4263,Andy Warhol
+70,70,Warhol's exploration of beauty and fame through his art,3709,Andy Warhol
+71,71,A vibrant and energetic image of Elvis Presley by Warhol,2950,Andy Warhol
+72,72,Warhol's experimentation with color and composition in his art,2649,Andy Warhol
+73,73,A hauntingly beautiful portrait of Elizabeth Taylor by Warhol,3078,Andy Warhol
+74,74,The fascinating intersection of art and commerce in Warhol's work,568,Andy Warhol
+75,75,A playful and whimsical image of a banana by Warhol,4792,Andy Warhol
+76,76,Warhol's commentary on consumerism and mass production through his art,1980,Andy Warhol
+77,77,The timeless allure of Warhol's silver screen prints,1472,Andy Warhol
+78,78,A glimpse into Warhol's artistic process and experimentation,1291,Andy Warhol
+79,79,The enduring impact of Warhol's art on pop culture and beyond,896,Andy Warhol
+80,80,"A figure bathed in dramatic light against a dark background, reminiscent of Caravaggio's chiaroscuro technique.",4532,Caravaggio
+81,81,"A religious scene featuring a haggard figure with prominent wrinkles and facial hair, inspired by Caravaggio's use of realism.",461,Caravaggio
+82,82,"A dramatic moment captured in vivid detail, with stark contrasts between light and shadow, much like Caravaggio's paintings.",4750,Caravaggio
+83,83,"An intimate portrait featuring a contemplative subject, illuminated by a single source of light, reminiscent of Caravaggio's style.",892,Caravaggio
+84,84,"A figure in motion, captured with striking realism and intense emotion, inspired by Caravaggio's use of naturalism.",3997,Caravaggio
+85,85,"A dark and moody scene with strong contrasts between light and shadow, reminiscent of Caravaggio's chiaroscuro technique.",3255,Caravaggio
+86,86,"A religious scene featuring dramatic and intense figures with outstretched arms, inspired by Caravaggio's use of theatricality.",3256,Caravaggio
+87,87,"An emotionally charged portrait featuring a figure with piercing eyes and intense expression, reminiscent of Caravaggio's realism.",1166,Caravaggio
+88,88,"A scene of intense violence, captured in stark detail with dramatic lighting and realistic depictions of blood, inspired by Caravaggio's dramatic style.",1478,Caravaggio
+89,89,"A still life featuring bold contrasts between light and shadow, and dramatic use of color, reminiscent of Caravaggio's paintings.",1123,Caravaggio
+90,90,"A religious scene with intense and dramatic figures, captured in striking detail and stark contrasts of light and shadow, inspired by Caravaggio's style.",3026,Caravaggio
+91,91,"An emotionally charged portrait featuring a figure with a sorrowful expression and dark background, inspired by Caravaggio's use of dramatic lighting.",4534,Caravaggio
+92,92,"A scene of quiet contemplation featuring a figure in shadow, illuminated by a single source of light, reminiscent of Caravaggio's style.",4589,Caravaggio
+93,93,"A religious scene featuring a group of figures with outstretched arms and dramatic expressions, captured in stark detail and strong contrasts of light and shadow, inspired by Caravaggio's theatricality.",4701,Caravaggio
+94,94,"A figure illuminated by a single source of light, with stark contrasts between light and shadow, reminiscent of Caravaggio's chiaroscuro technique.",2423,Caravaggio
+95,95,"A scene of intense emotion featuring a figure with tears streaming down their face, captured with vivid realism and dramatic use of light, inspired by Caravaggio's style.",4194,Caravaggio
+96,96,"A still life featuring everyday objects, captured with striking realism and dramatic use of light and shadow, reminiscent of Caravaggio's paintings.",4882,Caravaggio
+97,97,"A religious scene featuring intense and dramatic figures with outstretched arms and exaggerated expressions, inspired by Caravaggio's theatricality.",1842,Caravaggio
+98,98,"A portrait featuring a figure with a piercing gaze and dramatic use of light and shadow, reminiscent of Caravaggio's realism.",2544,Caravaggio
+99,99,"A scene of intense suffering and emotion, captured with striking realism and dramatic use of light and shadow, inspired by Caravaggio's style.",2412,Caravaggio
