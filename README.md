@@ -3,6 +3,8 @@
  Project Website    [https://erasing.baulab.info](https://erasing.baulab.info) <br>
  Arxiv Preprint     [https://arxiv.org/pdf/2303.07345.pdf](https://arxiv.org/pdf/2303.07345.pdf) <br>
  Fine-tuned Weights [https://erasing.baulab.info/weights/esd_models/](https://erasing.baulab.info/weights/esd_models/) <br>
+ Huggingface Demo   [Demo](https://huggingface.co/spaces/baulab/Erasing-Concepts-In-Diffusion)<br>
+ 
 <div align='center'>
 <img src = 'images/applications.png'>
 </div>
@@ -16,6 +18,18 @@ Given only a short text description of an undesired visual concept and no additi
 ## Fine-tuned Weights
 
 The finetuned weights for both NSFW and art style erasures are available on our [project page](https://erasing.baulab.info).
+
+## Running Gradio Demo Locally
+
+To run the gradio interactive demo locally, clone the files from [demo Repository](https://huggingface.co/spaces/baulab/Erasing-Concepts-In-Diffusion/tree/main) <br>
+
+1.) Create an environment using the packages included in the requirements.txt file
+
+2.) Run `python app.py`
+
+3.) Open the application in browser at `http://127.0.0.1:7860/`
+
+4.) Train, evaluate, and save models using our method
 
 ## Installation Guide
 
