@@ -1,9 +1,6 @@
 # Erasing Concepts from Diffusion Models
 
- Project Website    > [https://erasing.baulab.info](https://erasing.baulab.info) <br>
- Arxiv Preprint     > [https://arxiv.org/pdf/2303.07345.pdf](https://arxiv.org/pdf/2303.07345.pdf) <br>
- Fine-tuned Weights > [https://erasing.baulab.info/weights/esd_models/](https://erasing.baulab.info/weights/esd_models/) <br>
- Huggingface Demo   > [Demo](https://huggingface.co/spaces/baulab/Erasing-Concepts-In-Diffusion)<br>
+ ##  [Project Website](https://erasing.baulab.info) | [Preprint](https://arxiv.org/pdf/2303.07345.pdf) | [Fine-tuned Weights](https://erasing.baulab.info/weights/esd_models/) | [Demo](https://huggingface.co/spaces/baulab/Erasing-Concepts-In-Diffusion) <br>
  
 <div align='center'>
 <img src = 'images/applications.png'>
