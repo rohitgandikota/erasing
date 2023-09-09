@@ -60,10 +60,10 @@ To generate images from one of the custom models use the following instructions:
 ## Citing our work
 The preprint can be cited as follows
 ```
-@article{gandikota2023erasing,
+@inproceedings{gandikota2023erasing,
   title={Erasing Concepts from Diffusion Models},
   author={Rohit Gandikota and Joanna Materzy\'nska and Jaden Fiotto-Kaufman and David Bau},
-  journal={arXiv preprint arXiv:2303.07345},
+  booktitle={Proceedings of the 2023 IEEE International Conference on Computer Vision},
   year={2023}
 }
 ```
