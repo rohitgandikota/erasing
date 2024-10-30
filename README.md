@@ -27,9 +27,9 @@ After installation, follow these instructions to train a custom ESD model. Pick 
 python esd_diffusers.py --erase_concept 'Van Gogh' --train_method 'xattn'
 ```
 
-You can now erase an attribute from a concept!! 
+💡 New application: You can now erase an attribute from a concept!! Instead of erasing a whole concept you can just precisely remove some of its attributes. For example, you can erase hats from cowboys but keep the rest intact!
 ```
-python esd_diffusers.py --erase_concept 'red' --erase_from 'rose' --train_method 'xattn'
+python esd_diffusers.py --erase_concept 'cowboy hat' --erase_from 'cowboy' --train_method 'xattn'
 ```
 
 The optimization process for erasing undesired visual concepts from pre-trained diffusion model weights involves using a short text description of the concept as guidance. The ESD model is fine-tuned with the conditioned and unconditioned scores obtained from frozen SD model to guide the output away from the concept being erased. The model learns from it's own knowledge to steer the diffusion process away from the undesired concept.
