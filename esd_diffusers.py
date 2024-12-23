@@ -18,11 +18,11 @@ from diffusers.schedulers.scheduling_lms_discrete import LMSDiscreteScheduler
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from utils.utils import *
 
-def train(erase_concept, erase_from, train_method, iterations, negative_guidance, lr, save_path):
+def train(erase_concept, erase_from, train_method, iterations, negative_guidance, lr, save_path, device):
   
     nsteps = 50
 
-    diffuser = StableDiffuser(scheduler='DDIM').to('cuda')
+    diffuser = StableDiffuser(scheduler='DDIM').to(device)
     diffuser.train()
 
     finetuner = FineTunedModel(diffuser, train_method=train_method)
@@ -145,4 +145,5 @@ if __name__ == '__main__':
     if not os.path.exists(args.save_path):
         os.makedirs(args.save_path, exist_ok = True)
     save_path = f'{args.save_path}/{name}.pt'
-    train(erase_concept=erase_concept, erase_from=erase_from, train_method=train_method, iterations=iterations, negative_guidance=negative_guidance, lr=lr, save_path=save_path)
+    device = args.device
+    train(erase_concept=erase_concept, erase_from=erase_from, train_method=train_method, iterations=iterations, negative_guidance=negative_guidance, lr=lr, save_path=save_path, device=device)

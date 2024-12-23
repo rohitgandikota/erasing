@@ -365,6 +365,8 @@ class FineTunedModel(torch.nn.Module):
                 elif train_method == 'selfattn':
                     if 'attn1' not in module_name:
                         continue
+                elif train_method == 'full':
+                    pass
                 else:
                     raise NotImplementedError(
                         f"train_method: {train_method} is not implemented."
