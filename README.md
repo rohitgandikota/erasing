@@ -25,16 +25,16 @@ pip install -r requirements.txt
 ### SDv1.4
 After installation, follow these instructions to train a custom ESD model for Stable Diffusion V1.4. Pick from following `'xattn'`,`'noxattn'`, `'selfattn'`, `'full'`:
 ```python
-python esd_diffusers.py --erase_concept 'Van Gogh' --train_method 'xattn'
+python esd_sd.py --erase_concept 'Van Gogh' --train_method 'xattn'
 ```
 
 💡 New application: You can now erase an attribute from a concept!! Instead of erasing a whole concept you can just precisely remove some of its attributes. For example, you can erase hats from cowboys but keep the rest intact!
 ```python
-python esd_diffusers.py --erase_concept 'cowboy hat' --erase_from 'cowboy' --train_method 'xattn'
+python esd_sd.py --erase_concept 'cowboy hat' --erase_from 'cowboy' --train_method 'xattn'
 ```
 
 ### SDXL
-After installation, follow these instructions to train a custom ESD model for Stable Diffusion V1.4. Pick from following `'esd-x'`,`'esd-u'`, `'esd-a'`, `'esd-x-strict'`:
+After installation, follow these instructions to train a custom ESD model for Stable Diffusion V1.4. Pick from following `'esd-x'`, `'esd-x-strict'` (NOTE: `'esd-u'` is currently experimental and might produce unexpected artifacts):
 ```python
 python esd_sdxl.py --erase_concept 'Van Gogh' --train_method 'esd-x-strict'
 ```
