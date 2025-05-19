@@ -66,7 +66,10 @@ To run the gradio interactive demo locally, clone the files from [demo repositor
 * Run `python app.py`
 * Open the application in browser at `http://127.0.0.1:7860/`
 * Train, evaluate, and save models using our method
-  
+
+## NOTE ON LICENSE
+The code and methods behind our work have been released under MIT. However, the models that you use our methods with, might be on a different licenses. Please read the model's license (the model you are using) carefully for more details. 
+
 ## Citing our work
 The preprint can be cited as follows
 ```
