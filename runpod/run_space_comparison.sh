@@ -39,29 +39,35 @@ cd "$WORKDIR"
 echo "==> Pulling latest code..."
 git pull origin main
 
-# ── install any new deps ──────────────────────────────────────────────────────
+# ── install deps (never touch torch/torchvision — use pod's pre-installed CUDA build) ──
 echo "==> Installing/verifying deps..."
 pip install -q \
   "diffusers==0.30.3" "transformers==4.43.4" "accelerate==0.33.0" \
   "safetensors==0.4.3" pandas Pillow tqdm huggingface_hub lpips \
-  "git+https://github.com/openai/CLIP.git" clean-fid torchvision
+  "git+https://github.com/openai/CLIP.git"
 
-# ── CUDA check (functional — actually allocates on GPU) ──────────────────────
+# Install clean-fid without letting it pull in a CPU-only torchvision
+pip install -q clean-fid --no-deps
+pip install -q numpy scipy requests
+
+# ── CUDA check ────────────────────────────────────────────────────────────────
+echo "==> Checking CUDA..."
+# Ensure CUDA runtime libs are on the path before checking
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:/usr/local/cuda/lib64:/usr/local/lib"
 python3 - << 'PYEOF'
 import torch
-# torch.cuda.is_available() can return False in PyTorch 2.11 due to lazy-init
-# quirks even when the GPU is present. Use device_count() and a real allocation.
-n = torch.cuda.device_count()
-if n == 0:
-    print(f"ERROR: No CUDA GPU found. torch={torch.__version__}")
+print(f"  torch={torch.__version__}, cuda_built={torch.version.cuda}, devices={torch.cuda.device_count()}")
+if torch.cuda.device_count() == 0:
+    print("ERROR: No CUDA GPU found (device_count=0). Check pod GPU attachment.")
     raise SystemExit(1)
 try:
     t = torch.zeros(1, device="cuda")
     _ = t + t
+    print(f"  OK: GPU={torch.cuda.get_device_name(0)}")
 except Exception as e:
     print(f"ERROR: GPU allocation failed: {e}")
+    print("  Try: stop the pod, re-attach the GPU, and restart.")
     raise SystemExit(1)
-print(f"  OK: torch={torch.__version__}, GPU={torch.cuda.get_device_name(0)} ({n} device(s))")
 PYEOF
 
 mkdir -p "$RESULTS"
