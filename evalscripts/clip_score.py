@@ -36,11 +36,15 @@ def load_images(image_dir: Path):
     return paths
 
 
-def compute_clip_scores(image_paths, text: str, model, preprocess, device: str):
-    text_token = clip.tokenize([text]).to(device)
+def compute_clip_scores(image_paths, concept_text: str, anchor_text: str,
+                        model, preprocess, device: str):
+    concept_tok = clip.tokenize([concept_text]).to(device)
+    anchor_tok  = clip.tokenize([anchor_text]).to(device)
     with torch.no_grad():
-        text_emb = model.encode_text(text_token)
-        text_emb = text_emb / text_emb.norm(dim=-1, keepdim=True)
+        concept_emb = model.encode_text(concept_tok)
+        concept_emb = concept_emb / concept_emb.norm(dim=-1, keepdim=True)
+        anchor_emb  = model.encode_text(anchor_tok)
+        anchor_emb  = anchor_emb / anchor_emb.norm(dim=-1, keepdim=True)
 
     scores = []
     for path in image_paths:
@@ -48,18 +52,28 @@ def compute_clip_scores(image_paths, text: str, model, preprocess, device: str):
         with torch.no_grad():
             img_emb = model.encode_image(img)
             img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
-            score = (img_emb @ text_emb.T).item()
-        scores.append({"image": path.name, "clip_score": round(score, 4)})
+            clip_concept = (img_emb @ concept_emb.T).item()
+            clip_anchor  = (img_emb @ anchor_emb.T).item()
+        # style_delta: how much more like the concept than a generic anchor image.
+        # Lower = more erased. Negative = model produces less Van-Gogh-like images
+        # than a generic painting baseline, which is ideal.
+        scores.append({
+            "image":       path.name,
+            "clip_score":  round(clip_concept, 4),
+            "style_delta": round(clip_concept - clip_anchor, 4),
+        })
     return scores
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_dir",    default=None, help="Single image directory")
-    parser.add_argument("--image_dirs",   nargs="+",    help="Multiple image directories (one row per dir in output)")
+    parser.add_argument("--image_dirs",   nargs="+",    help="Multiple image directories")
     parser.add_argument("--concept_text", default="a painting in the style of Van Gogh")
+    parser.add_argument("--anchor_text",  default="a painting",
+                        help="Neutral reference text; style_delta = clip_concept - clip_anchor")
     parser.add_argument("--output_csv",   default="results/clip_scores.csv")
-    parser.add_argument("--clip_model",   default="ViT-L/14", help="CLIP backbone (ViT-B/32 or ViT-L/14)")
+    parser.add_argument("--clip_model",   default="ViT-L/14")
     parser.add_argument("--device",       default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
@@ -79,13 +93,20 @@ def main():
         if not paths:
             print(f"  WARNING: no images found in {d}")
             continue
-        scores = compute_clip_scores(paths, args.concept_text, model, preprocess, args.device)
+        scores = compute_clip_scores(paths, args.concept_text, args.anchor_text,
+                                     model, preprocess, args.device)
         for s in scores:
             s["model"] = d.name
         all_rows.extend(scores)
-        mean_score = sum(s["clip_score"] for s in scores) / len(scores)
-        print(f"  {d.name:45s}  CLIP={mean_score:.4f}  (n={len(scores)})")
-        summary_rows.append({"model": d.name, "mean_clip_score": round(mean_score, 4), "n_images": len(scores)})
+        mean_clip  = sum(s["clip_score"]  for s in scores) / len(scores)
+        mean_delta = sum(s["style_delta"] for s in scores) / len(scores)
+        print(f"  {d.name:45s}  CLIP={mean_clip:.4f}  style_delta={mean_delta:.4f}  (n={len(scores)})")
+        summary_rows.append({
+            "model":            d.name,
+            "mean_clip_score":  round(mean_clip,  4),
+            "mean_style_delta": round(mean_delta, 4),
+            "n_images":         len(scores),
+        })
 
     out = Path(args.output_csv)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -95,8 +116,8 @@ def main():
     pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
     print(f"\nPer-image scores  → {out}")
     print(f"Summary           → {summary_path}")
-    print(f"\nConcept text: '{args.concept_text}'")
-    print("(Lower CLIP score = concept more thoroughly erased)")
+    print(f"\nConcept: '{args.concept_text}'  |  Anchor: '{args.anchor_text}'")
+    print("style_delta = CLIP(concept) - CLIP(anchor).  Lower/negative = more erased.")
 
 
 if __name__ == "__main__":

@@ -30,6 +30,8 @@ def main():
     parser.add_argument("--gradient_clip_norm", type=float, default=1.0)
     parser.add_argument("--pres_lambda",      type=float, default=1.0,
                         help="Weight for preservation loss (0 disables it)")
+    parser.add_argument("--n_latents_avg",   type=int,   default=4,
+                        help="Latents averaged per step for stable d_style estimate")
     parser.add_argument("--allow_tf32",       action="store_true")
     args = parser.parse_args()
 
@@ -53,6 +55,7 @@ def main():
         protect_concept=args.protect_concept,
         space_pairs_path=args.space_pairs_path,
         pres_lambda=args.pres_lambda,
+        n_latents_avg=args.n_latents_avg,
         allow_tf32=args.allow_tf32,
     )
 

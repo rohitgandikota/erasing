@@ -33,11 +33,16 @@ def safe_read(path: Path) -> pd.DataFrame:
     return pd.DataFrame()
 
 
-def extract_clip(results_dir: Path) -> dict:
+def extract_clip(results_dir: Path) -> tuple:
+    """Returns (clip_map, delta_map) dicts keyed by model name."""
     df = safe_read(results_dir / "clip_scores_summary.csv")
     if df.empty:
-        return {}
-    return dict(zip(df["model"], df["mean_clip_score"].round(4)))
+        return {}, {}
+    clip_map  = dict(zip(df["model"], df["mean_clip_score"].round(4)))
+    delta_map = {}
+    if "mean_style_delta" in df.columns:
+        delta_map = dict(zip(df["model"], df["mean_style_delta"].round(4)))
+    return clip_map, delta_map
 
 
 def extract_classify(results_dir: Path) -> dict:
@@ -89,7 +94,7 @@ def main():
     args = parser.parse_args()
 
     rd = Path(args.results_dir)
-    clip_map     = extract_clip(rd)
+    clip_map, delta_map = extract_clip(rd)
     classify_map = extract_classify(rd)
     lpips_map    = extract_lpips(rd)
     fid_map      = extract_fid(rd)
@@ -114,11 +119,12 @@ def main():
         lpips_val = lpips_map.get(model, NA)
 
         rows.append({
-            "Model":           model,
-            "CLIP ↓":         clip_map.get(model, NA),
-            "ResNet-acc ↓":   classify_map.get(model, NA),
-            "LPIPS ↑":        lpips_val,
-            "FID ↓":          fid_map.get(model, NA),
+            "Model":             model,
+            "CLIP ↓":           clip_map.get(model, NA),
+            "style_delta ↓":    delta_map.get(model, NA),
+            "ResNet-acc ↓":     classify_map.get(model, NA),
+            "LPIPS ↑":          lpips_val,
+            "FID ↓":            fid_map.get(model, NA),
         })
 
     df = pd.DataFrame(rows)
@@ -130,10 +136,11 @@ def main():
     print(df.to_string(index=False))
     print(f"\nSaved → {out}")
     print("\nMetric guide:")
-    print("  CLIP ↓       : Lower = Van Gogh style more erased")
-    print("  ResNet-acc ↓ : Lower = Erased model less often classified as Van Gogh")
-    print("  LPIPS ↑      : Higher = More different from original (more erasure)")
-    print("  FID ↓        : Lower = Less drift from original SD quality")
+    print("  CLIP ↓         : Lower = Van Gogh style more erased")
+    print("  style_delta ↓  : CLIP(concept) - CLIP(anchor). Negative = erased below generic painting baseline")
+    print("  ResNet-acc ↓   : Lower top-1 confidence = less coherent style (proxy)")
+    print("  LPIPS ↑        : Higher = More different from original (more erasure)")
+    print("  FID ↓          : Lower = Less drift from original SD quality (unreliable at n<2000)")
 
 
 if __name__ == "__main__":

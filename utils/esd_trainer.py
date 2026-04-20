@@ -72,7 +72,8 @@ class ESDConfig:
     protect_concept: Optional[str] = None
     protect_concepts_k: Optional[List[str]] = None  # K>1 protection concepts for GS
     space_pairs_path: Optional[str] = None
-    pres_lambda: float = 1.0  # weight for preservation loss (0 disables it)
+    pres_lambda: float = 1.0   # weight for preservation loss (0 disables it)
+    n_latents_avg: int = 4     # latents averaged for stable d_style estimate
 
     @property
     def erase_from_effective(self) -> str:
@@ -1263,6 +1264,17 @@ class SpaceSDAdapter(BaseESDAdapter):
                 )
                 protect_embeds_k.append(p_emb.to(config.device))
 
+            # Null embed ("") as fixed anchor for protection directions —
+            # ensures pres_dir_k = ε(prot_k) - ε(null) is consistent across steps.
+            null_emb, _ = pipe.encode_prompt(
+                prompt="",
+                device=config.device,
+                num_images_per_prompt=config.batch_size,
+                do_classifier_free_guidance=False,
+                negative_prompt="",
+            )
+            null_embed = null_emb.to(config.device)
+
         alphas_cumprod = pipe.scheduler.alphas_cumprod.to(config.device)
 
         timestep_cond = None
@@ -1281,6 +1293,7 @@ class SpaceSDAdapter(BaseESDAdapter):
             "anchor_embeds": anchor_embeds,
             "protect_embed": protect_embeds_k[0],   # backward compat
             "protect_embeds_k": protect_embeds_k,   # full list for K-GS + pres loss
+            "null_embed": null_embed,               # fixed anchor for protection directions
             "alphas_cumprod": alphas_cumprod,
             "timestep_cond": timestep_cond,
         }
@@ -1288,74 +1301,109 @@ class SpaceSDAdapter(BaseESDAdapter):
     def training_step(self, pipe, prepared: PreparedComponent, context: Dict[str, Any], config: ESDConfig) -> StepResult:
         n_pairs = len(context["concept_embeds"])
         i = random.randint(0, n_pairs - 1)
-        t = random.randint(0, 999)
 
-        # Direct forward-process latent — no denoising trajectory needed
-        res = context["resolution"] // 8  # VAE scale factor = 8
-        b = config.batch_size
-        x0 = torch.randn(b, 4, res, res, device=config.device, dtype=config.torch_dtype)
-        eps = torch.randn_like(x0)
+        # Bias toward style-informative timestep range [100, 700].
+        # Uniform [0,999] wastes ~30% of steps on near-clean (t<100) and pure-noise
+        # (t>700) regions where style gradients are minimal.
+        t = random.randint(100, 700)
+
+        res = context["resolution"] // 8
+        b   = config.batch_size
+        N   = config.n_latents_avg   # number of latents to average for stable d_style
+        tc  = context["timestep_cond"]
+
         alpha_bar = context["alphas_cumprod"][t].to(dtype=config.torch_dtype)
-        xt = alpha_bar.sqrt() * x0 + (1.0 - alpha_bar).sqrt() * eps
+        timestep  = torch.tensor([t], device=config.device, dtype=torch.long)
 
-        timestep = torch.tensor([t], device=config.device, dtype=torch.long)
-
-        concept_emb      = context["concept_embeds"][i]   # (b, 77, 768)
+        concept_emb      = context["concept_embeds"][i]    # (b, 77, 768)
         anchor_emb       = context["anchor_embeds"][i]
-        protect_embeds_k = context["protect_embeds_k"]    # list of K tensors
+        null_emb         = context["null_embed"]            # (b, 77, 768) — fixed ""
+        protect_embeds_k = context["protect_embeds_k"]     # list of K tensors
+        K = len(protect_embeds_k)
 
-        # Batch concept + anchor frozen forward passes together for efficiency
-        batch_emb = torch.cat([concept_emb, anchor_emb], dim=0)  # (2b, 77, 768)
-        xt_batch  = xt.expand(2 * b, -1, -1, -1)
-        tc = context["timestep_cond"]
-        tc_batch = tc.expand(2 * b, -1) if tc is not None else None
+        # ── Direction-estimation latents (N independent samples) ──────────────
+        x0_est  = torch.randn(N, 4, res, res, device=config.device, dtype=config.torch_dtype)
+        eps_est = torch.randn_like(x0_est)
+        xt_est  = alpha_bar.sqrt() * x0_est + (1.0 - alpha_bar).sqrt() * eps_est
+
+        # xt used for student/preservation is the first estimation latent
+        xt = xt_est[:b]
+
+        # ── Frozen forward A: concept × N and anchor × N in one batched call ──
+        # Expanding text embeddings across N latents (works for b=1 which SPACE uses)
+        concept_exp = concept_emb.expand(N, -1, -1)   # (N, 77, 768)
+        anchor_exp  = anchor_emb.expand(N, -1, -1)    # (N, 77, 768)
+        batch_ca    = torch.cat([concept_exp, anchor_exp], dim=0)  # (2N, 77, 768)
+        xt_ca = torch.cat([xt_est, xt_est], dim=0)    # (2N, 4, res, res)
+        tc_ca = tc.expand(2 * N, -1) if tc is not None else None
 
         prepared.use_base()
         prepared.component.eval()
         with torch.no_grad():
-            preds = prepared.component(
-                xt_batch,
-                timestep.expand(2 * b),
-                encoder_hidden_states=batch_emb,
-                timestep_cond=tc_batch,
+            preds_ca = prepared.component(
+                xt_ca,
+                timestep.expand(2 * N),
+                encoder_hidden_states=batch_ca,
+                timestep_cond=tc_ca,
                 cross_attention_kwargs=None,
                 added_cond_kwargs=None,
                 return_dict=False,
             )[0]
-            eps_concept = preds[0:b]
-            eps_anchor  = preds[b:2*b]
 
-        # Style direction: eps(concept) - eps(anchor) isolates the attribute
-        d_style = eps_concept - eps_anchor
+        eps_concepts = preds_ca[:N]     # (N, 4, res, res)
+        eps_anchors  = preds_ca[N:2*N]  # (N, 4, res, res)
 
-        # K-step Gram-Schmidt: sequentially project out each protection direction
-        d_proj = d_style
+        # Average style direction over N latents — reduces per-step noise significantly
+        avg_d_style    = (eps_concepts - eps_anchors).mean(0, keepdim=True)  # (1, 4, res, res)
+        eps_anchor_xt  = eps_anchors[:b]  # prediction for xt specifically (used in target)
+
+        # ── Frozen forward B: null + K protection embeds with xt (single latent) ─
+        null_prot_batch = torch.cat([null_emb] + protect_embeds_k, dim=0)  # ((K+1)*b, 77, 768)
+        xt_np  = xt.expand(K + 1, -1, -1, -1)
+        tc_np  = tc.expand(K + 1, -1) if tc is not None else None
+
         with torch.no_grad():
-            for k_emb in protect_embeds_k:
-                eps_prot_k = prepared.component(
-                    xt,
-                    timestep,
-                    encoder_hidden_states=k_emb,
-                    timestep_cond=tc,
-                    cross_attention_kwargs=None,
-                    added_cond_kwargs=None,
-                    return_dict=False,
-                )[0]
-                pres_dir_k = eps_prot_k - eps_anchor
-                d_flat = d_proj.reshape(-1).float()
-                p_flat = pres_dir_k.reshape(-1).float()
-                dot_dp = torch.dot(d_flat, p_flat)
-                dot_pp = torch.dot(p_flat, p_flat) + 1e-8
-                d_proj = d_proj - (dot_dp / dot_pp) * pres_dir_k
+            preds_np = prepared.component(
+                xt_np,
+                timestep.expand(K + 1),
+                encoder_hidden_states=null_prot_batch,
+                timestep_cond=tc_np,
+                cross_attention_kwargs=None,
+                added_cond_kwargs=None,
+                return_dict=False,
+            )[0]
 
-        # Rescale d_proj back to d_style's original magnitude — GS only changes
-        # direction, the magnitude loss is an unintended side effect we undo here.
-        d_proj_rescaled = d_proj * (d_style.norm() / (d_proj.norm() + 1e-8))
+        eps_null_xt = preds_np[:b]  # (b, 4, res, res)
+        # Protection directions relative to null — consistent across all steps
+        raw_pres_dirs = [preds_np[(j + 1) * b:(j + 2) * b] - eps_null_xt for j in range(K)]
 
-        # Target: steer concept prompts to anchor behaviour, then push η steps away
-        target = eps_anchor - config.negative_guidance * d_proj_rescaled
+        # ── Modified Gram-Schmidt: orthogonalize protection dirs against each other ──
+        # Standard sequential GS on d_style is only correct if the protection directions
+        # are mutually orthogonal. MGS on the protection directions first then project.
+        ortho_pres_dirs = []
+        for raw_dir in raw_pres_dirs:
+            q = raw_dir.clone()
+            for u in ortho_pres_dirs:
+                q_flat = q.reshape(-1).float()
+                u_flat = u.reshape(-1).float()
+                q = q - (torch.dot(q_flat, u_flat) / (torch.dot(u_flat, u_flat) + 1e-8)) * u
+            if q.norm() > 1e-8:
+                ortho_pres_dirs.append(q)
 
-        # Student forward (trainable to_k + to_v only)
+        # Project avg_d_style onto orthogonal complement of span{protection directions}
+        d_proj = avg_d_style
+        for u in ortho_pres_dirs:
+            d_flat = d_proj.reshape(-1).float()
+            u_flat = u.reshape(-1).float()
+            d_proj = d_proj - (torch.dot(d_flat, u_flat) / (torch.dot(u_flat, u_flat) + 1e-8)) * u
+
+        # Rescale back to avg_d_style's magnitude — GS changes direction, not magnitude
+        d_proj_rescaled = d_proj * (avg_d_style.norm() / (d_proj.norm() + 1e-8))
+
+        # Target: steer concept to anchor behaviour, then push η steps in style direction
+        target = eps_anchor_xt - config.negative_guidance * d_proj_rescaled
+
+        # ── Student forward ───────────────────────────────────────────────────
         prepared.use_student()
         prepared.component.train()
         model_pred = prepared.component(
@@ -1368,27 +1416,14 @@ class SpaceSDAdapter(BaseESDAdapter):
             return_dict=False,
         )[0]
 
-        # Preservation loss: keep student behaviour frozen on a random protection concept
+        # ── Preservation loss (reuse already-computed frozen preds_np) ────────
         pres_loss = None
         if config.pres_lambda > 0.0:
-            k_idx    = random.randint(0, len(protect_embeds_k) - 1)
+            k_idx = random.randint(0, K - 1)
+            # preds_np layout: [null, prot_0, prot_1, ..., prot_{K-1}] each of size b
+            eps_pres_frozen = preds_np[(k_idx + 1) * b:(k_idx + 2) * b]
             pres_emb = protect_embeds_k[k_idx]
 
-            prepared.use_base()
-            prepared.component.eval()
-            with torch.no_grad():
-                eps_pres_frozen = prepared.component(
-                    xt,
-                    timestep,
-                    encoder_hidden_states=pres_emb,
-                    timestep_cond=tc,
-                    cross_attention_kwargs=None,
-                    added_cond_kwargs=None,
-                    return_dict=False,
-                )[0]
-
-            prepared.use_student()
-            prepared.component.train()
             eps_pres_student = prepared.component(
                 xt,
                 timestep,
@@ -1398,7 +1433,6 @@ class SpaceSDAdapter(BaseESDAdapter):
                 added_cond_kwargs=None,
                 return_dict=False,
             )[0]
-
             pres_loss = F.mse_loss(eps_pres_student.float(), eps_pres_frozen.float())
 
         metrics = {} if pres_loss is None else {"pres_loss": pres_loss}

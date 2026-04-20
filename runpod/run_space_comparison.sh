@@ -143,6 +143,7 @@ python3 evalscripts/clip_score.py \
               "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" \
               "$SPACE_OUTPUT_DIR" \
   --concept_text "$CONCEPT_TEXT" \
+  --anchor_text "a painting" \
   --output_csv "$RESULTS/clip_scores.csv" \
   --device cuda
 
