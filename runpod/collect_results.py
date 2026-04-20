@@ -41,19 +41,23 @@ def extract_clip(results_dir: Path) -> dict:
 
 
 def extract_classify(results_dir: Path) -> dict:
-    """Return {model_name: top1_accuracy} by reading imageclassify CSVs."""
+    """Return {model_name: mean_top1_score} by reading imageclassify CSVs.
+
+    imageclassify.py produces columns: category_top1 (str), index_top1, scores_top1 (float).
+    We report mean scores_top1 as a proxy for classification confidence.
+    """
     out = {}
     for f in results_dir.glob("classify_*.csv"):
         model_name = f.stem.replace("classify_", "")
         df = pd.read_csv(f)
-        # imageclassify.py outputs top predictions; look for accuracy column
-        acc_cols = [c for c in df.columns if "acc" in c.lower() or "top" in c.lower()]
-        if acc_cols:
-            out[model_name] = round(df[acc_cols[0]].mean(), 4)
-        elif "pred_1" in df.columns:
-            # Heuristic: fraction of images where top-1 prediction contains "van gogh"
-            van_gogh_frac = df["pred_1"].str.lower().str.contains("gogh|van").mean()
-            out[model_name] = round(van_gogh_frac, 4)
+        if "scores_top1" in df.columns:
+            out[model_name] = round(float(df["scores_top1"].mean()), 4)
+        else:
+            # Fallback: numeric columns only
+            num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])
+                        and ("score" in c.lower() or "acc" in c.lower())]
+            if num_cols:
+                out[model_name] = round(float(df[num_cols[0]].mean()), 4)
     return out
 
 
