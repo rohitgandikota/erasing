@@ -163,13 +163,13 @@ python3 evalscripts/lpips_eval.py \
   --original_path "$OUTPUTS/sdv14" \
   --edited_path "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" \
   --prompts_path "$PROMPTS" \
-  --save_path "$RESULTS/lpips_esd.csv"
+  --save_path "$RESULTS/lpips_diffusers-VanGogh-ESDx1-UNET.csv"
 
 python3 evalscripts/lpips_eval.py \
   --original_path "$OUTPUTS/sdv14" \
   --edited_path "$SPACE_OUTPUT_DIR" \
   --prompts_path "$PROMPTS" \
-  --save_path "$RESULTS/lpips_space.csv"
+  --save_path "$RESULTS/lpips_$(basename "$SPACE_OUTPUT_DIR").csv"
 
 # ── Eval 4: FID (erased vs original SD outputs as reference) ─────────────────
 echo "==> Eval: FID (vs original SD outputs)..."

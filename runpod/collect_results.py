@@ -62,13 +62,16 @@ def extract_classify(results_dir: Path) -> dict:
 
 
 def extract_lpips(results_dir: Path) -> dict:
+    """Keys are the exact model dir name (lpips_<model>.csv → <model>)."""
     out = {}
     for f in results_dir.glob("lpips_*.csv"):
-        label = f.stem.replace("lpips_", "")
+        model_name = f.stem[len("lpips_"):]
         df = pd.read_csv(f)
-        lpips_cols = [c for c in df.columns if "lpips" in c.lower() or "loss" in c.lower() or "score" in c.lower()]
+        lpips_cols = [c for c in df.columns
+                      if ("lpips" in c.lower() or "loss" in c.lower())
+                      and pd.api.types.is_numeric_dtype(df[c])]
         if lpips_cols:
-            out[label] = round(df[lpips_cols[0]].mean(), 4)
+            out[model_name] = round(float(df[lpips_cols[0]].mean()), 4)
     return out
 
 
@@ -108,12 +111,7 @@ def main():
 
     rows = []
     for model in all_models:
-        # LPIPS: keyed by "esd" or "space" shorthand, not full model name
-        lpips_val = NA
-        for k, v in lpips_map.items():
-            if k.lower() in model.lower() or model.lower() in k.lower():
-                lpips_val = v
-                break
+        lpips_val = lpips_map.get(model, NA)
 
         rows.append({
             "Model":           model,
