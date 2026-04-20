@@ -17,7 +17,8 @@ REPO_URL="https://github.com/Vedang-P/erasing.git"
 WEIGHTS_URL="https://erasing.baulab.info/weights/esd_models/art/diffusers-VanGogh-ESDx1-UNET.pt"
 BASE_MODEL="CompVis/stable-diffusion-v1-4"
 WORKDIR="/workspace/erasing"
-WEIGHTS_PATH="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.pt"
+WEIGHTS_PT="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.pt"
+WEIGHTS_ST="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.safetensors"
 PROMPTS="$WORKDIR/runpod/vangogh_prompts.csv"
 OUTPUTS="$WORKDIR/outputs"
 
@@ -30,16 +31,15 @@ else
 fi
 cd "$WORKDIR"
 
-# ── Install deps pinned to torch 2.4.x era ───────────────────────────────────
-# We do NOT install torch/torchvision/torch_xla — use the pod's pre-installed versions.
-# requirements.txt pins versions too new for torch 2.4.0, so we use a curated list.
-echo "==> Installing compatible Python dependencies..."
+# ── Install deps (skip torch/torchvision/torch_xla — use pod's pre-installed versions) ──
+# Use pinned versions compatible with torch 2.4–2.8.
+echo "==> Installing Python dependencies..."
 pip install -q \
-  "diffusers==0.27.2" \
-  "transformers==4.41.2" \
-  "accelerate==0.30.1" \
+  "diffusers==0.30.3" \
+  "transformers==4.43.4" \
+  "accelerate==0.33.0" \
   "safetensors==0.4.3" \
-  "pandas" "Pillow" "tqdm" "huggingface_hub"
+  pandas Pillow tqdm huggingface_hub
 
 # ── Assert CUDA works ─────────────────────────────────────────────────────────
 echo "==> Checking CUDA..."
@@ -47,13 +47,23 @@ python3 - << 'PYEOF'
 import torch
 if not torch.cuda.is_available():
     print(f"ERROR: CUDA not available. torch={torch.__version__}")
-    print("  -> Wrong RunPod template. Use 'RunPod Pytorch 2.4.0' (CUDA 12.4).")
+    print("  -> Use RunPod 'Pytorch 2.8.0' template (supports Blackwell GPUs).")
     raise SystemExit(1)
-print(f"  OK: torch={torch.__version__}, CUDA={torch.version.cuda}, GPU={torch.cuda.get_device_name(0)}")
+gpu = torch.cuda.get_device_name(0)
+cap = torch.cuda.get_device_capability(0)
+sm = f"sm_{cap[0]}{cap[1]}"
+print(f"  OK: torch={torch.__version__}, CUDA={torch.version.cuda}, GPU={gpu} ({sm})")
+# Fail early if GPU architecture is not supported by this torch build
+props = torch.cuda.get_device_properties(0)
+try:
+    t = torch.zeros(1, device="cuda")
+    _ = t + t
+except RuntimeError as e:
+    print(f"ERROR: GPU not usable: {e}")
+    raise SystemExit(1)
 PYEOF
 
 # ── Assert diffusers imports cleanly ─────────────────────────────────────────
-echo "==> Verifying diffusers import..."
 python3 -c "from diffusers import DiffusionPipeline; print('  diffusers OK')"
 
 # ── HF login ─────────────────────────────────────────────────────────────────
@@ -65,14 +75,35 @@ login(token=os.environ["HF_TOKEN"], add_to_git_credential=False)
 print("  HF login OK")
 PYEOF
 
-# ── Download ESD weights ──────────────────────────────────────────────────────
+# ── Download ESD weights (.pt pickle format) ──────────────────────────────────
 echo "==> Downloading Van Gogh ESD weights (~3.2 GB)..."
-mkdir -p "$(dirname "$WEIGHTS_PATH")"
-if [ ! -f "$WEIGHTS_PATH" ]; then
-  wget -q --show-progress -O "$WEIGHTS_PATH" "$WEIGHTS_URL"
+mkdir -p "$(dirname "$WEIGHTS_PT")"
+if [ ! -f "$WEIGHTS_PT" ]; then
+  wget -q --show-progress -O "$WEIGHTS_PT" "$WEIGHTS_URL"
 else
   echo "  Weights already present."
 fi
+
+# ── Convert .pt pickle → safetensors (repo now uses safetensors to load) ─────
+echo "==> Converting weights to safetensors format..."
+python3 - << PYEOF
+import os, torch
+from safetensors.torch import save_file
+
+pt_path = "$WEIGHTS_PT"
+st_path = "$WEIGHTS_ST"
+
+if os.path.exists(st_path):
+    print("  Already converted, skipping.")
+else:
+    print("  Loading .pt checkpoint...")
+    ckpt = torch.load(pt_path, map_location="cpu", weights_only=True)
+    if isinstance(ckpt, dict) and "state_dict" in ckpt:
+        ckpt = ckpt["state_dict"]
+    state_dict = {k: v for k, v in ckpt.items() if isinstance(v, torch.Tensor)}
+    save_file(state_dict, st_path, metadata={"format": "pt"})
+    print(f"  Saved: {st_path}")
+PYEOF
 
 # ── Clean stale outputs ───────────────────────────────────────────────────────
 echo "==> Cleaning previous outputs..."
@@ -94,7 +125,7 @@ python3 evalscripts/generate-images.py \
 echo "==> Pass 2 — ESD Van Gogh-erased model..."
 python3 evalscripts/generate-images.py \
   --base_model "$BASE_MODEL" \
-  --esd_path "$WEIGHTS_PATH" \
+  --esd_path "$WEIGHTS_ST" \
   --prompts_path "$PROMPTS" \
   --save_path "$OUTPUTS" \
   --num_samples 5 \
