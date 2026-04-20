@@ -30,7 +30,7 @@ OUTPUTS="$WORKDIR/outputs"
 RESULTS="$WORKDIR/results"
 ESD_WEIGHTS="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.safetensors"
 SPACE_WEIGHTS="$WORKDIR/esd-models/space/space-Van_Gogh-esdxstrict.safetensors"
-SPACE_OUTPUT_DIR="$OUTPUTS/space-Van_Gogh"
+SPACE_OUTPUT_DIR="$OUTPUTS/space-Van_Gogh-esdxstrict"
 CONCEPT_TEXT="a painting in the style of Van Gogh"
 
 cd "$WORKDIR"
@@ -148,9 +148,10 @@ python3 evalscripts/clip_score.py \
 
 # ── Eval 2: ResNet50 classification accuracy ──────────────────────────────────
 echo "==> Eval: ResNet50 classification..."
-for dir_name in sdv14 diffusers-VanGogh-ESDx1-UNET space-Van_Gogh; do
+for dir_path in "$OUTPUTS/sdv14" "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" "$SPACE_OUTPUT_DIR"; do
+  dir_name="$(basename "$dir_path")"
   python3 evalscripts/imageclassify.py \
-    --folder_path "$OUTPUTS/$dir_name" \
+    --folder_path "$dir_path" \
     --prompts_path "$PROMPTS" \
     --save_path "$RESULTS/classify_${dir_name}.csv" \
     --device cuda:0
