@@ -72,7 +72,7 @@ class ESDConfig:
     protect_concept: Optional[str] = None
     protect_concepts_k: Optional[List[str]] = None  # K>1 protection concepts for GS
     space_pairs_path: Optional[str] = None
-    pres_lambda: float = 1.0   # weight for preservation loss (0 disables it)
+    pres_lambda: float = 0.0   # weight for preservation loss (0 disables it; set >0 only with stylistically distant protection concepts)
     n_latents_avg: int = 4     # latents averaged for stable d_style estimate
 
     @property
@@ -1160,7 +1160,7 @@ class SpaceSDAdapter(BaseESDAdapter):
     Key differences from ESD-x:
       - Uses 20 concept/anchor prompt pairs (anchor = semantic match minus the attribute).
       - Style direction d_style = eps(concept) - eps(anchor) isolates the attribute only.
-      - K=1 Gram-Schmidt projects d_style orthogonal to a protection direction.
+      - K-GS projects d_style orthogonal to protection directions (use stylistically distant concepts, e.g. "a photograph").
       - Training latent sampled directly from N(0,I) via the forward diffusion equation
         (no partial denoising trajectory needed).
       - eta=5.0 is safe because d_style is a clean, low-noise direction.
@@ -1397,11 +1397,13 @@ class SpaceSDAdapter(BaseESDAdapter):
             u_flat = u.reshape(-1).float()
             d_proj = d_proj - (torch.dot(d_flat, u_flat) / (torch.dot(u_flat, u_flat) + 1e-8)) * u
 
-        # Rescale back to avg_d_style's magnitude — GS changes direction, not magnitude
-        d_proj_rescaled = d_proj * (avg_d_style.norm() / (d_proj.norm() + 1e-8))
+        # Normalize to unit norm — rescaling back to avg_d_style magnitude amplifies noise
+        # when similar protection styles (e.g. Monet/Cézanne/Renoir) eat most of d_style.
+        # Unit norm keeps η as a clean, consistent step size independent of projection residual.
+        d_proj_norm = d_proj / (d_proj.norm() + 1e-8)
 
         # Target: steer concept to anchor behaviour, then push η steps in style direction
-        target = eps_anchor_xt - config.negative_guidance * d_proj_rescaled
+        target = eps_anchor_xt - config.negative_guidance * d_proj_norm
 
         # ── Student forward ───────────────────────────────────────────────────
         prepared.use_student()

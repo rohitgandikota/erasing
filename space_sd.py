@@ -28,8 +28,8 @@ def main():
     parser.add_argument("--save_path",        default="esd-models/space/")
     parser.add_argument("--device",           default="cuda:0")
     parser.add_argument("--gradient_clip_norm", type=float, default=1.0)
-    parser.add_argument("--pres_lambda",      type=float, default=1.0,
-                        help="Weight for preservation loss (0 disables it)")
+    parser.add_argument("--pres_lambda",      type=float, default=0.0,
+                        help="Weight for preservation loss (0 disables it; high values fight erasure when protection styles resemble erase concept)")
     parser.add_argument("--n_latents_avg",   type=int,   default=4,
                         help="Latents averaged per step for stable d_style estimate")
     parser.add_argument("--allow_tf32",       action="store_true")
