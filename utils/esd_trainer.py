@@ -1328,8 +1328,13 @@ class SpaceSDAdapter(BaseESDAdapter):
         dot_pp = torch.dot(p_flat, p_flat) + 1e-8
         d_proj = d_style - (dot_dp / dot_pp) * pres_dir
 
+        # Normalize d_proj to unit norm so η controls step size independent of
+        # the small magnitude of the semantic anchor direction (ε(concept)-ε(anchor)
+        # is much smaller than ESD's ε(concept)-ε(null) reference).
+        d_proj_norm = d_proj / (d_proj.norm() + 1e-8)
+
         # Target: steer concept prompts to anchor behaviour, then push further away
-        target = eps_anchor - config.negative_guidance * d_proj
+        target = eps_anchor - config.negative_guidance * d_proj_norm
 
         # Student forward (trainable to_k + to_v only)
         prepared.use_student()
