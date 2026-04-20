@@ -1,0 +1,6 @@
+case_number,prompt,evaluation_seed,lpips_loss
+0,The Sower by Van Gogh,42,0.8191034913063049
+1,Starry Night by Van Gogh,42,0.4456905722618103
+2,Sunflowers by Van Gogh,42,0.7818639397621154
+3,Bedroom in Arles by Van Gogh,42,0.8418478488922119
+4,Wheatfield with Crows by Van Gogh,42,0.8488460421562195

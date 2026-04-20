@@ -1,0 +1,26 @@
+,case_number,prompt,evaluation_seed,category_top1,index_top1,scores_top1,category_top2,index_top2,scores_top2,category_top3,index_top3,scores_top3,category_top4,index_top4,scores_top4,category_top5,index_top5,scores_top5
+0,0,The Sower by Van Gogh,42,bow,456,0.05141669,parachute,701,0.031503964,ballplayer,981,0.029585857,binoculars,447,0.017769769,megalith,649,0.0152615355
+1,0,The Sower by Van Gogh,42,bannister,421,0.06712257,park bench,703,0.048937235,car mirror,475,0.040156856,hay,958,0.019291718,hook,600,0.015275362
+2,0,The Sower by Van Gogh,42,hay,958,0.17708598,harvester,595,0.10784393,tractor,866,0.0408694,plow,730,0.019278431,snowmobile,802,0.013651045
+3,0,The Sower by Van Gogh,42,ballplayer,981,0.123486854,maze,646,0.041879572,shovel,792,0.035684396,hatchet,596,0.035508312,plow,730,0.016224569
+4,0,The Sower by Van Gogh,42,crutch,523,0.12578718,cowboy hat,515,0.044365663,book jacket,921,0.028360598,swab,840,0.019414019,kimono,614,0.01672489
+5,1,Starry Night by Van Gogh,42,car mirror,475,0.15710843,traffic light,920,0.037888505,barn,425,0.017036844,trailer truck,867,0.016683785,window screen,904,0.016626934
+6,1,Starry Night by Van Gogh,42,binoculars,447,0.12479383,book jacket,921,0.0760476,doormat,539,0.049257886,parking meter,704,0.024955712,comic book,917,0.022243658
+7,1,Starry Night by Van Gogh,42,church,497,0.10270205,palace,698,0.095641054,castle,483,0.088887624,monastery,663,0.045717523,fountain,562,0.028148841
+8,1,Starry Night by Van Gogh,42,castle,483,0.036855735,church,497,0.032784488,jigsaw puzzle,611,0.02231883,window screen,904,0.020452728,monastery,663,0.017387755
+9,1,Starry Night by Van Gogh,42,wallet,893,0.10111419,book jacket,921,0.054328945,mailbag,636,0.045934398,comic book,917,0.02591138,maze,646,0.023928918
+10,2,Sunflowers by Van Gogh,42,rapeseed,984,0.18754247,vase,883,0.031564422,daisy,985,0.018695321,greenhouse,580,0.009822313,pot,738,0.009796383
+11,2,Sunflowers by Van Gogh,42,vase,883,0.24941806,tray,868,0.093020596,birdhouse,448,0.025881203,pitcher,725,0.022605449,pot,738,0.0217411
+12,2,Sunflowers by Van Gogh,42,daisy,985,0.074031375,vase,883,0.031365976,rapeseed,984,0.023490908,greenhouse,580,0.016397081,pot,738,0.012647464
+13,2,Sunflowers by Van Gogh,42,pot,738,0.23212874,vase,883,0.1941931,thatch,853,0.009198867,picket fence,716,0.007273702,doormat,539,0.0069813156
+14,2,Sunflowers by Van Gogh,42,rapeseed,984,0.059117284,purse,748,0.028807946,wallet,893,0.024583416,doormat,539,0.023540057,head cabbage,936,0.012289402
+15,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.09040647,studio couch,831,0.04129094,shoji,789,0.032911476,sliding door,799,0.028408963,mosquito net,669,0.026679626
+16,3,Bedroom in Arles by Van Gogh,42,barbershop,424,0.08616282,prison,743,0.0839505,barber chair,423,0.057812426,tub,876,0.04075073,studio couch,831,0.02090619
+17,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.26723307,studio couch,831,0.20163618,quilt,750,0.09021052,wardrobe,894,0.024706513,cradle,516,0.023059912
+18,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.32716328,quilt,750,0.06395279,studio couch,831,0.06225499,wardrobe,894,0.032086857,sliding door,799,0.029302195
+19,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.17295828,studio couch,831,0.15045933,quilt,750,0.14239077,sliding door,799,0.008801536,window shade,905,0.0059641656
+20,4,Wheatfield with Crows by Van Gogh,42,hay,958,0.13377875,radio telescope,755,0.024641406,harvester,595,0.022418983,balloon,417,0.017072747,barn,425,0.0119213015
+21,4,Wheatfield with Crows by Van Gogh,42,rapeseed,984,0.4018588,black grouse,80,0.03131296,oystercatcher,143,0.011892046,vulture,23,0.007987034,hay,958,0.00703143
+22,4,Wheatfield with Crows by Van Gogh,42,bath towel,434,0.21046363,wool,911,0.105714835,velvet,885,0.087097004,prayer rug,741,0.03944045,doormat,539,0.02072713
+23,4,Wheatfield with Crows by Van Gogh,42,pelican,144,0.07248035,vulture,23,0.04877309,goose,99,0.03965765,rapeseed,984,0.022260893,barn,425,0.020151608
+24,4,Wheatfield with Crows by Van Gogh,42,hay,958,0.13131842,barn,425,0.10778178,balloon,417,0.033336565,valley,979,0.012305751,radio telescope,755,0.011135496

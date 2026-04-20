@@ -1,0 +1,26 @@
+,case_number,prompt,evaluation_seed,category_top1,index_top1,scores_top1,category_top2,index_top2,scores_top2,category_top3,index_top3,scores_top3,category_top4,index_top4,scores_top4,category_top5,index_top5,scores_top5
+0,0,The Sower by Van Gogh,42,umbrella,879,0.14151779,chest,492,0.035342168,doormat,539,0.0353036,tray,868,0.022608312,envelope,549,0.01609544
+1,0,The Sower by Van Gogh,42,book jacket,921,0.113737494,rapeseed,984,0.08406744,chest,492,0.018503949,comic book,917,0.01647989,unicycle,880,0.008696957
+2,0,The Sower by Van Gogh,42,theater curtain,854,0.23986344,doormat,539,0.03764881,chest,492,0.03708046,comic book,917,0.035022452,tray,868,0.015810365
+3,0,The Sower by Van Gogh,42,chest,492,0.07098788,comic book,917,0.02450234,maze,646,0.018143225,rapeseed,984,0.016935691,book jacket,921,0.016165543
+4,0,The Sower by Van Gogh,42,theater curtain,854,0.1457703,comic book,917,0.056776706,chest,492,0.03453405,tray,868,0.034458134,book jacket,921,0.014092292
+5,1,Starry Night by Van Gogh,42,matchstick,644,0.03806524,nematode,111,0.025534604,lighter,626,0.013690862,spotlight,818,0.012518721,digital clock,530,0.011750625
+6,1,Starry Night by Van Gogh,42,matchstick,644,0.03806524,nematode,111,0.025534604,lighter,626,0.013690862,spotlight,818,0.012518721,digital clock,530,0.011750625
+7,1,Starry Night by Van Gogh,42,comic book,917,0.039457206,velvet,885,0.033570368,sarong,775,0.033116195,quilt,750,0.026490683,apron,411,0.025807515
+8,1,Starry Night by Van Gogh,42,sarong,775,0.06714598,comic book,917,0.06392302,swimming trunks,842,0.03353079,shower cap,793,0.028726254,quilt,750,0.024033053
+9,1,Starry Night by Van Gogh,42,comic book,917,0.043616258,sarong,775,0.04264048,apron,411,0.029244142,quilt,750,0.026514951,velvet,885,0.026461272
+10,2,Sunflowers by Van Gogh,42,tray,868,0.1021487,vase,883,0.06582036,comic book,917,0.05266003,doormat,539,0.024503125,pillow,721,0.02128584
+11,2,Sunflowers by Van Gogh,42,tray,868,0.08835673,comic book,917,0.06860186,vase,883,0.05139279,doormat,539,0.029565867,handkerchief,591,0.021331355
+12,2,Sunflowers by Van Gogh,42,tray,868,0.38860103,pillow,721,0.045073286,vase,883,0.031871315,wall clock,892,0.02309226,toilet seat,861,0.021169249
+13,2,Sunflowers by Van Gogh,42,tray,868,0.20318058,jigsaw puzzle,611,0.08677313,comic book,917,0.04177064,pillow,721,0.03290159,vase,883,0.020007635
+14,2,Sunflowers by Van Gogh,42,comic book,917,0.1421786,parking meter,704,0.0427012,rain barrel,756,0.03195422,tray,868,0.030263621,wall clock,892,0.030030983
+15,3,Bedroom in Arles by Van Gogh,42,comic book,917,0.069070436,throne,857,0.052076206,studio couch,831,0.050534192,cradle,516,0.037486624,tray,868,0.026551057
+16,3,Bedroom in Arles by Van Gogh,42,comic book,917,0.060745828,prayer rug,741,0.05493594,tray,868,0.0489836,rocking chair,765,0.035550952,throne,857,0.03477667
+17,3,Bedroom in Arles by Van Gogh,42,dining table,532,0.09346078,throne,857,0.069203936,maze,646,0.049135342,prayer rug,741,0.036595475,rocking chair,765,0.02522049
+18,3,Bedroom in Arles by Van Gogh,42,studio couch,831,0.13571262,quilt,750,0.069127806,tray,868,0.064670816,handkerchief,591,0.057933126,maze,646,0.041622307
+19,3,Bedroom in Arles by Van Gogh,42,comic book,917,0.09739551,studio couch,831,0.0509057,cradle,516,0.038283464,crib,520,0.030942503,jigsaw puzzle,611,0.021862859
+20,4,Wheatfield with Crows by Van Gogh,42,doormat,539,0.07570763,harvester,595,0.05178192,barn,425,0.03692594,bath towel,434,0.03572303,stingray,6,0.03131153
+21,4,Wheatfield with Crows by Van Gogh,42,doormat,539,0.096389316,rapeseed,984,0.045315232,coral reef,973,0.019702988,wreck,913,0.013108462,book jacket,921,0.009419759
+22,4,Wheatfield with Crows by Van Gogh,42,hay,958,0.029561108,barn,425,0.024234328,purse,748,0.020782767,jigsaw puzzle,611,0.019695433,doormat,539,0.01833618
+23,4,Wheatfield with Crows by Van Gogh,42,comic book,917,0.05512597,chest,492,0.046742305,tray,868,0.03012109,packet,692,0.026312063,doormat,539,0.026226701
+24,4,Wheatfield with Crows by Van Gogh,42,theater curtain,854,0.031090168,comic book,917,0.027849838,doormat,539,0.02772589,chest,492,0.021169124,dishrag,533,0.019254545

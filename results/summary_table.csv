@@ -1,0 +1,4 @@
+Model,CLIP ↓,ResNet-acc ↓,LPIPS ↑,FID ↓
+sdv14,0.2538,0.1043,N/A,N/A
+diffusers-VanGogh-ESDx1-UNET,0.1772,0.1505,0.4349,351.78
+space-Van_Gogh-esdxstrict,0.158,0.0381,0.7475,697.68
