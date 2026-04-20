@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ESD Van Gogh replication — RunPod setup script
-# Usage (in RunPod terminal, after setting HF_TOKEN):
+# Usage:
 #   export HF_TOKEN=<your_huggingface_token>
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Vedang-P/erasing/main/runpod/setup_and_run.sh)
 
@@ -30,21 +30,31 @@ else
 fi
 cd "$WORKDIR"
 
-# ── Install deps (skip torch/torchvision/torch_xla — use pod's pre-installed versions) ──
-echo "==> Installing Python dependencies (skipping torch/torchvision/torch_xla)..."
-grep -vE "^torch==|^torchvision|^torch_xla" requirements.txt > /tmp/req_gpu.txt
-pip install -q -r /tmp/req_gpu.txt
+# ── Install deps pinned to torch 2.4.x era ───────────────────────────────────
+# We do NOT install torch/torchvision/torch_xla — use the pod's pre-installed versions.
+# requirements.txt pins versions too new for torch 2.4.0, so we use a curated list.
+echo "==> Installing compatible Python dependencies..."
+pip install -q \
+  "diffusers==0.27.2" \
+  "transformers==4.41.2" \
+  "accelerate==0.30.1" \
+  "safetensors==0.4.3" \
+  "pandas" "Pillow" "tqdm" "huggingface_hub"
 
-# ── Assert CUDA works before doing anything else ─────────────────────────────
+# ── Assert CUDA works ─────────────────────────────────────────────────────────
 echo "==> Checking CUDA..."
 python3 - << 'PYEOF'
 import torch
 if not torch.cuda.is_available():
     print(f"ERROR: CUDA not available. torch={torch.__version__}")
-    print("  -> Wrong RunPod template. Use 'RunPod PyTorch 2.4.1' (CUDA 12.4).")
+    print("  -> Wrong RunPod template. Use 'RunPod Pytorch 2.4.0' (CUDA 12.4).")
     raise SystemExit(1)
 print(f"  OK: torch={torch.__version__}, CUDA={torch.version.cuda}, GPU={torch.cuda.get_device_name(0)}")
 PYEOF
+
+# ── Assert diffusers imports cleanly ─────────────────────────────────────────
+echo "==> Verifying diffusers import..."
+python3 -c "from diffusers import DiffusionPipeline; print('  diffusers OK')"
 
 # ── HF login ─────────────────────────────────────────────────────────────────
 echo "==> Authenticating with Hugging Face..."
@@ -64,7 +74,7 @@ else
   echo "  Weights already present."
 fi
 
-# ── Clean any stale outputs from previous runs ────────────────────────────────
+# ── Clean stale outputs ───────────────────────────────────────────────────────
 echo "==> Cleaning previous outputs..."
 rm -rf "$OUTPUTS"
 mkdir -p "$OUTPUTS"
@@ -101,5 +111,4 @@ python3 runpod/compare_outputs.py \
   --out "$OUTPUTS/comparison_grid.png"
 
 echo ""
-echo "Done! Get your results:"
-echo "  JupyterLab file browser -> $OUTPUTS/comparison_grid.png"
+echo "Done! Download: $OUTPUTS/comparison_grid.png"
