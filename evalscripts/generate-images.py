@@ -50,7 +50,9 @@ def generate_images(
     Generate images from a diffusers pipeline with an optional ESD checkpoint.
     """
     model_name = infer_model_name(base_model, esd_path)
-    pipe = DiffusionPipeline.from_pretrained(base_model, torch_dtype=torch_dtype).to(device)
+    pipe = DiffusionPipeline.from_pretrained(
+        base_model, torch_dtype=torch_dtype, safety_checker=None
+    ).to(device)
 
     if esd_path is not None:
         try:

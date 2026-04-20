@@ -105,33 +105,38 @@ else:
     print(f"  Saved: {st_path}")
 PYEOF
 
-# ── Clean stale outputs ───────────────────────────────────────────────────────
-echo "==> Cleaning previous outputs..."
-rm -rf "$OUTPUTS"
 mkdir -p "$OUTPUTS"
 
-# ── Pass 1: original SD v1.4 ─────────────────────────────────────────────────
-echo "==> Pass 1 — original SD v1.4..."
-python3 evalscripts/generate-images.py \
-  --base_model "$BASE_MODEL" \
-  --prompts_path "$PROMPTS" \
-  --save_path "$OUTPUTS" \
-  --num_samples 5 \
-  --num_inference_steps 50 \
-  --guidance_scale 7.5 \
-  --device cuda:0
+# ── Pass 1: original SD v1.4 (skip if already generated) ─────────────────────
+if [ -f "$OUTPUTS/sdv14/0_0.png" ]; then
+  echo "==> Pass 1 (Original SD) already present — skipping."
+else
+  echo "==> Pass 1 — original SD v1.4..."
+  python3 evalscripts/generate-images.py \
+    --base_model "$BASE_MODEL" \
+    --prompts_path "$PROMPTS" \
+    --save_path "$OUTPUTS" \
+    --num_samples 5 \
+    --num_inference_steps 50 \
+    --guidance_scale 7.5 \
+    --device cuda:0
+fi
 
-# ── Pass 2: ESD Van Gogh-erased ───────────────────────────────────────────────
-echo "==> Pass 2 — ESD Van Gogh-erased model..."
-python3 evalscripts/generate-images.py \
-  --base_model "$BASE_MODEL" \
-  --esd_path "$WEIGHTS_ST" \
-  --prompts_path "$PROMPTS" \
-  --save_path "$OUTPUTS" \
-  --num_samples 5 \
-  --num_inference_steps 50 \
-  --guidance_scale 7.5 \
-  --device cuda:0
+# ── Pass 2: ESD Van Gogh-erased (skip if already generated) ──────────────────
+if [ -f "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET/0_0.png" ]; then
+  echo "==> Pass 2 (ESD) already present — skipping."
+else
+  echo "==> Pass 2 — ESD Van Gogh-erased model..."
+  python3 evalscripts/generate-images.py \
+    --base_model "$BASE_MODEL" \
+    --esd_path "$WEIGHTS_ST" \
+    --prompts_path "$PROMPTS" \
+    --save_path "$OUTPUTS" \
+    --num_samples 5 \
+    --num_inference_steps 50 \
+    --guidance_scale 7.5 \
+    --device cuda:0
+fi
 
 # ── Comparison grid ───────────────────────────────────────────────────────────
 echo "==> Building comparison grid..."
