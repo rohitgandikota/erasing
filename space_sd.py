@@ -46,7 +46,7 @@ def main():
         resolution=None,                 # auto-detected from model config
         save_path=args.save_path,
         device=args.device,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
         gradient_clip_norm=args.gradient_clip_norm,
         protect_concept=args.protect_concept,
         space_pairs_path=args.space_pairs_path,
