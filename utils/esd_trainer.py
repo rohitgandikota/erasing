@@ -1393,7 +1393,8 @@ def run_esd_training(config: ESDConfig) -> str:
     optimizer = torch.optim.Adam(prepared.parameters(), lr=learning_rate)
     context = adapter.prepare_context(pipe, config)
 
-    pbar = tqdm(range(config.iterations), desc=f"Training ESD ({adapter.family})")
+    method = "SPACE" if config.family.startswith("space") else "ESD"
+    pbar = tqdm(range(config.iterations), desc=f"Training {method} ({adapter.family})")
     for _ in pbar:
         optimizer.zero_grad(set_to_none=True)
         step_result = adapter.training_step(pipe, prepared, context, config)
