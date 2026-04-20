@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import gc
+import json
 import os
 import random
 import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, Iterator, Mapping, Optional
+from pathlib import Path
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional
 
 import numpy as np
 import torch
@@ -70,6 +72,9 @@ class ESDConfig:
     max_sequence_length: int = 77
     gradient_checkpointing: bool = False
     allow_tf32: bool = False
+    gradient_clip_norm: Optional[float] = None
+    protect_concept: Optional[str] = None
+    space_pairs_path: Optional[str] = None
 
     @property
     def erase_from_effective(self) -> str:
@@ -1143,11 +1148,212 @@ class Flux2KleinESDAdapter(BaseESDAdapter):
         return StepResult(model_pred=model_pred, target=target, timestep_index=run_till_timestep)
 
 
+class SpaceSDAdapter(BaseESDAdapter):
+    """SPACE: Semantically Precise Attribute Concept Erasure for SD v1.x.
+
+    Key differences from ESD-x:
+      - Uses 20 concept/anchor prompt pairs (anchor = semantic match minus the attribute).
+      - Style direction d_style = eps(concept) - eps(anchor) isolates the attribute only.
+      - K=1 Gram-Schmidt projects d_style orthogonal to a protection direction.
+      - Training latent sampled directly from N(0,I) via the forward diffusion equation
+        (no partial denoising trajectory needed).
+      - eta=5.0 is safe because d_style is a clean, low-noise direction.
+    """
+
+    family = "sd"
+    component_attr = "unet"
+    default_base_model_id = "CompVis/stable-diffusion-v1-4"
+    default_save_path = "esd-models/space/"
+
+    def normalize_train_method(self, train_method: str) -> str:
+        # SPACE always uses esd-x-strict (only attn2.to_k and attn2.to_v)
+        aliases = {
+            "esd-x-strict": "esd-x-strict",
+            "xattn-strict": "esd-x-strict",
+        }
+        normalized = aliases.get(train_method, "esd-x-strict")
+        return normalized
+
+    def default_lr_for_method(self, train_method: str) -> float:
+        return 1e-5
+
+    def load_pipeline(self, config: ESDConfig):
+        pipe = StableDiffusionPipeline.from_pretrained(
+            config.base_model_id,
+            torch_dtype=config.torch_dtype,
+            use_safetensors=True,
+        ).to(config.device)
+        pipe.vae.requires_grad_(False)
+        pipe.text_encoder.requires_grad_(False)
+        if pipe.safety_checker is not None:
+            pipe.safety_checker.requires_grad_(False)
+        return pipe
+
+    def select_parameter_names(self, component: torch.nn.Module, train_method: str) -> list[str]:
+        def selector(module_name: str) -> bool:
+            return "attn2.to_k" in module_name or "attn2.to_v" in module_name
+        return select_parameter_names(component, selector)
+
+    def _load_pairs(self, config: ESDConfig) -> Dict[str, Any]:
+        if config.space_pairs_path:
+            pairs_path = Path(config.space_pairs_path)
+        else:
+            concept_slug = config.erase_concept.lower().replace(" ", "_")
+            pairs_path = Path("data/space_pairs") / f"{concept_slug}.json"
+        if not pairs_path.exists():
+            raise FileNotFoundError(
+                f"SPACE pairs file not found: {pairs_path}. "
+                "Create it or pass --space_pairs_path explicitly."
+            )
+        with open(pairs_path) as f:
+            return json.load(f)
+
+    def prepare_context(self, pipe, config: ESDConfig) -> Dict[str, Any]:
+        resolution = self.resolve_resolution(pipe, config)
+        pairs_data = self._load_pairs(config)
+        pairs = pairs_data["pairs"]
+        protect_prompt = config.protect_concept or pairs_data.get("protect", "")
+
+        concept_embeds: List[torch.Tensor] = []
+        anchor_embeds: List[torch.Tensor] = []
+
+        with torch.no_grad():
+            for pair in pairs:
+                c_emb, _ = pipe.encode_prompt(
+                    prompt=pair["concept"],
+                    device=config.device,
+                    num_images_per_prompt=config.batch_size,
+                    do_classifier_free_guidance=False,
+                    negative_prompt="",
+                )
+                concept_embeds.append(c_emb.to(config.device))
+
+                a_emb, _ = pipe.encode_prompt(
+                    prompt=pair["anchor"],
+                    device=config.device,
+                    num_images_per_prompt=config.batch_size,
+                    do_classifier_free_guidance=False,
+                    negative_prompt="",
+                )
+                anchor_embeds.append(a_emb.to(config.device))
+
+            protect_emb, _ = pipe.encode_prompt(
+                prompt=protect_prompt,
+                device=config.device,
+                num_images_per_prompt=config.batch_size,
+                do_classifier_free_guidance=False,
+                negative_prompt="",
+            )
+            protect_embed = protect_emb.to(config.device)
+
+        alphas_cumprod = pipe.scheduler.alphas_cumprod.to(config.device)
+
+        timestep_cond = None
+        if pipe.unet.config.time_cond_proj_dim is not None:
+            guidance_scale_tensor = torch.tensor(config.guidance_scale - 1).repeat(config.batch_size)
+            timestep_cond = pipe.get_guidance_scale_embedding(
+                guidance_scale_tensor,
+                embedding_dim=pipe.unet.config.time_cond_proj_dim,
+            ).to(device=config.device, dtype=config.torch_dtype)
+
+        offload_modules_to_cpu(config.device, pipe.vae, pipe.text_encoder, pipe.safety_checker)
+
+        return {
+            "resolution": resolution,
+            "concept_embeds": concept_embeds,
+            "anchor_embeds": anchor_embeds,
+            "protect_embed": protect_embed,
+            "alphas_cumprod": alphas_cumprod,
+            "timestep_cond": timestep_cond,
+        }
+
+    def training_step(self, pipe, prepared: PreparedComponent, context: Dict[str, Any], config: ESDConfig) -> StepResult:
+        n_pairs = len(context["concept_embeds"])
+        i = random.randint(0, n_pairs - 1)
+        t = random.randint(0, 999)
+
+        # Direct forward-process latent — no denoising trajectory needed
+        res = context["resolution"] // 8  # VAE scale factor = 8
+        x0 = torch.randn(1, 4, res, res, device=config.device, dtype=config.torch_dtype)
+        eps = torch.randn_like(x0)
+        alpha_bar = context["alphas_cumprod"][t].to(dtype=config.torch_dtype)
+        xt = alpha_bar.sqrt() * x0 + (1.0 - alpha_bar).sqrt() * eps
+
+        timestep = torch.tensor([t], device=config.device, dtype=torch.long)
+
+        concept_emb = context["concept_embeds"][i]   # (B, 77, 768)
+        anchor_emb  = context["anchor_embeds"][i]
+        protect_emb = context["protect_embed"]
+
+        # Batch the 3 frozen forward passes for efficiency
+        batch_emb = torch.cat([concept_emb, anchor_emb, protect_emb], dim=0)  # (3B, 77, 768)
+        b = concept_emb.shape[0]
+        xt_batch = xt.expand(3 * b, -1, -1, -1)
+        timestep_batch = timestep.expand(3 * b)
+
+        prepared.use_base()
+        prepared.component.eval()
+        with torch.no_grad():
+            preds = prepared.component(
+                xt_batch,
+                timestep_batch,
+                encoder_hidden_states=batch_emb,
+                timestep_cond=context["timestep_cond"],
+                cross_attention_kwargs=None,
+                added_cond_kwargs=None,
+                return_dict=False,
+            )[0]
+            eps_concept = preds[0:b]
+            eps_anchor  = preds[b:2*b]
+            eps_protect = preds[2*b:3*b]
+
+        # Style direction: eps(concept) - eps(anchor) isolates the attribute
+        d_style   = eps_concept - eps_anchor
+        pres_dir  = eps_protect - eps_anchor
+
+        # K=1 Gram-Schmidt: remove the component of d_style along pres_dir
+        d_flat = d_style.reshape(-1).float()
+        p_flat = pres_dir.reshape(-1).float()
+        dot_dp = torch.dot(d_flat, p_flat)
+        dot_pp = torch.dot(p_flat, p_flat) + 1e-8
+        d_proj = d_style - (dot_dp / dot_pp) * pres_dir
+
+        # Target: steer concept prompts to anchor behaviour, then push further away
+        target = eps_anchor - config.negative_guidance * d_proj
+
+        # Student forward (trainable to_k + to_v only)
+        prepared.use_student()
+        prepared.component.train()
+        model_pred = prepared.component(
+            xt,
+            timestep,
+            encoder_hidden_states=concept_emb,
+            timestep_cond=context["timestep_cond"],
+            cross_attention_kwargs=None,
+            added_cond_kwargs=None,
+            return_dict=False,
+        )[0]
+
+        return StepResult(model_pred=model_pred, target=target, timestep_index=t)
+
+    def build_checkpoint_path(self, config: ESDConfig) -> str:
+        filename = f"space-{sanitize_checkpoint_name(config.erase_concept)}-esdxstrict.safetensors"
+        return os.path.join(config.save_path, filename)
+
+    def build_metadata(self, config: ESDConfig) -> Dict[str, str]:
+        metadata = super().build_metadata(config)
+        metadata["method"] = "space"
+        metadata["eta"] = str(config.negative_guidance)
+        metadata["protect_concept"] = config.protect_concept or ""
+        return metadata
+
+
 ADAPTERS = {
     "sd": StableDiffusionESDAdapter(),
     "sdxl": StableDiffusionXLESDAdapter(),
     "flux": FluxESDAdapter(),
     "flux2_klein": Flux2KleinESDAdapter(),
+    "space-sd": SpaceSDAdapter(),
 }
 
 
@@ -1183,6 +1389,8 @@ def run_esd_training(config: ESDConfig) -> str:
         step_result = adapter.training_step(pipe, prepared, context, config)
         loss = F.mse_loss(step_result.model_pred.float(), step_result.target.float())
         loss.backward()
+        if config.gradient_clip_norm is not None:
+            torch.nn.utils.clip_grad_norm_(list(prepared.parameters()), config.gradient_clip_norm)
         optimizer.step()
 
         postfix = {"esd_loss": f"{loss.item():.4f}", "timestep": step_result.timestep_index}

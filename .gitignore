@@ -4,3 +4,6 @@ esd-models
 esd-images
 esd_models
 *.pdf
+*.pyc
+*.egg-info
+.DS_Store

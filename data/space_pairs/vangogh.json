@@ -1,0 +1,26 @@
+{
+  "concept": "Van Gogh",
+  "protect": "Claude Monet",
+  "pairs": [
+    {"concept": "a painting in the style of Van Gogh", "anchor": "a painting"},
+    {"concept": "an oil painting by Van Gogh", "anchor": "an oil painting"},
+    {"concept": "a landscape rendered in Van Gogh style", "anchor": "a landscape painting"},
+    {"concept": "a portrait painted in the manner of Van Gogh", "anchor": "a portrait painting"},
+    {"concept": "a still life in Van Gogh's style", "anchor": "a still life painting"},
+    {"concept": "a watercolor by Van Gogh", "anchor": "a watercolor painting"},
+    {"concept": "a sketch in the style of Van Gogh", "anchor": "a sketch"},
+    {"concept": "a colorful painting by Van Gogh", "anchor": "a colorful painting"},
+    {"concept": "a dark oil painting in Van Gogh style", "anchor": "a dark oil painting"},
+    {"concept": "a sunset painted by Van Gogh", "anchor": "a sunset painting"},
+    {"concept": "nature artwork in the style of Van Gogh", "anchor": "nature artwork"},
+    {"concept": "a wheat field painted in Van Gogh's style", "anchor": "a wheat field painting"},
+    {"concept": "a starry night painting by Van Gogh", "anchor": "a night sky painting"},
+    {"concept": "a bedroom scene in the style of Van Gogh", "anchor": "a bedroom scene painting"},
+    {"concept": "flowers painted in Van Gogh style", "anchor": "a flower painting"},
+    {"concept": "a cityscape by Van Gogh", "anchor": "a cityscape painting"},
+    {"concept": "an impressionist painting in Van Gogh's style", "anchor": "an impressionist painting"},
+    {"concept": "a textured oil painting in the manner of Van Gogh", "anchor": "a textured oil painting"},
+    {"concept": "bold expressive brushstrokes painting by Van Gogh", "anchor": "an expressive painting"},
+    {"concept": "a vivid colorful artwork in the style of Van Gogh", "anchor": "a vivid colorful artwork"}
+  ]
+}
