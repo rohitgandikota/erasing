@@ -43,7 +43,7 @@ git pull origin main
 echo "==> Installing/verifying deps..."
 pip install -q \
   "diffusers==0.30.3" "transformers==4.43.4" "accelerate==0.33.0" \
-  "safetensors==0.4.3" pandas Pillow tqdm huggingface_hub lpips \
+  "safetensors==0.4.3" pandas Pillow tqdm huggingface_hub lpips matplotlib \
   "git+https://github.com/openai/CLIP.git"
 
 # Install clean-fid without letting it pull in a CPU-only torchvision
