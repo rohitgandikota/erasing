@@ -46,8 +46,23 @@ pip install -q \
   "safetensors==0.4.3" pandas Pillow tqdm huggingface_hub lpips \
   "git+https://github.com/openai/CLIP.git" clean-fid torchvision
 
-# ── CUDA check ───────────────────────────────────────────────────────────────
-python3 -c "import torch; assert torch.cuda.is_available(), 'CUDA not available'; print(f'  GPU: {torch.cuda.get_device_name(0)}')"
+# ── CUDA check (functional — actually allocates on GPU) ──────────────────────
+python3 - << 'PYEOF'
+import torch
+# torch.cuda.is_available() can return False in PyTorch 2.11 due to lazy-init
+# quirks even when the GPU is present. Use device_count() and a real allocation.
+n = torch.cuda.device_count()
+if n == 0:
+    print(f"ERROR: No CUDA GPU found. torch={torch.__version__}")
+    raise SystemExit(1)
+try:
+    t = torch.zeros(1, device="cuda")
+    _ = t + t
+except Exception as e:
+    print(f"ERROR: GPU allocation failed: {e}")
+    raise SystemExit(1)
+print(f"  OK: torch={torch.__version__}, GPU={torch.cuda.get_device_name(0)} ({n} device(s))")
+PYEOF
 
 mkdir -p "$RESULTS"
 
