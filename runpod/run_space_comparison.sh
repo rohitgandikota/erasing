@@ -129,32 +129,25 @@ python3 evalscripts/clip_score.py \
 echo "==> Eval: ResNet50 classification..."
 for dir_name in sdv14 diffusers-VanGogh-ESDx1-UNET space-Van_Gogh; do
   python3 evalscripts/imageclassify.py \
-    --folder "$OUTPUTS/$dir_name" \
-    --outpath "$RESULTS/classify_${dir_name}.csv" 2>/dev/null || \
-  python3 evalscripts/imageclassify.py \
-    --img_dir "$OUTPUTS/$dir_name" \
-    --out_csv "$RESULTS/classify_${dir_name}.csv" 2>/dev/null || true
+    --folder_path "$OUTPUTS/$dir_name" \
+    --prompts_path "$PROMPTS" \
+    --save_path "$RESULTS/classify_${dir_name}.csv" \
+    --device cuda:0
 done
 
 # ── Eval 3: LPIPS (erased vs original) ───────────────────────────────────────
 echo "==> Eval: LPIPS..."
 python3 evalscripts/lpips_eval.py \
-  --ref_folder "$OUTPUTS/sdv14" \
-  --gen_folder "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" \
-  --out_path "$RESULTS/lpips_esd.csv" 2>/dev/null || \
-python3 evalscripts/lpips_eval.py \
-  --ref_dir "$OUTPUTS/sdv14" \
-  --gen_dir "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" \
-  --output_csv "$RESULTS/lpips_esd.csv" 2>/dev/null || true
+  --original_path "$OUTPUTS/sdv14" \
+  --edited_path "$OUTPUTS/diffusers-VanGogh-ESDx1-UNET" \
+  --prompts_path "$PROMPTS" \
+  --save_path "$RESULTS/lpips_esd.csv"
 
 python3 evalscripts/lpips_eval.py \
-  --ref_folder "$OUTPUTS/sdv14" \
-  --gen_folder "$SPACE_OUTPUT_DIR" \
-  --out_path "$RESULTS/lpips_space.csv" 2>/dev/null || \
-python3 evalscripts/lpips_eval.py \
-  --ref_dir "$OUTPUTS/sdv14" \
-  --gen_dir "$SPACE_OUTPUT_DIR" \
-  --output_csv "$RESULTS/lpips_space.csv" 2>/dev/null || true
+  --original_path "$OUTPUTS/sdv14" \
+  --edited_path "$SPACE_OUTPUT_DIR" \
+  --prompts_path "$PROMPTS" \
+  --save_path "$RESULTS/lpips_space.csv"
 
 # ── Eval 4: FID (erased vs original SD outputs as reference) ─────────────────
 echo "==> Eval: FID (vs original SD outputs)..."

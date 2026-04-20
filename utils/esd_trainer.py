@@ -1213,6 +1213,11 @@ class SpaceSDAdapter(BaseESDAdapter):
         pairs_data = self._load_pairs(config)
         pairs = pairs_data["pairs"]
         protect_prompt = config.protect_concept or pairs_data.get("protect", "")
+        if not protect_prompt:
+            raise ValueError(
+                "SPACE requires a protection concept. Add a 'protect' key to the pairs JSON "
+                "or pass --protect_concept explicitly."
+            )
 
         concept_embeds: List[torch.Tensor] = []
         anchor_embeds: List[torch.Tensor] = []
@@ -1274,22 +1279,24 @@ class SpaceSDAdapter(BaseESDAdapter):
 
         # Direct forward-process latent — no denoising trajectory needed
         res = context["resolution"] // 8  # VAE scale factor = 8
-        x0 = torch.randn(1, 4, res, res, device=config.device, dtype=config.torch_dtype)
+        b = config.batch_size
+        x0 = torch.randn(b, 4, res, res, device=config.device, dtype=config.torch_dtype)
         eps = torch.randn_like(x0)
         alpha_bar = context["alphas_cumprod"][t].to(dtype=config.torch_dtype)
         xt = alpha_bar.sqrt() * x0 + (1.0 - alpha_bar).sqrt() * eps
 
         timestep = torch.tensor([t], device=config.device, dtype=torch.long)
 
-        concept_emb = context["concept_embeds"][i]   # (B, 77, 768)
+        concept_emb = context["concept_embeds"][i]   # (b, 77, 768)
         anchor_emb  = context["anchor_embeds"][i]
         protect_emb = context["protect_embed"]
 
         # Batch the 3 frozen forward passes for efficiency
-        batch_emb = torch.cat([concept_emb, anchor_emb, protect_emb], dim=0)  # (3B, 77, 768)
-        b = concept_emb.shape[0]
+        batch_emb = torch.cat([concept_emb, anchor_emb, protect_emb], dim=0)  # (3b, 77, 768)
         xt_batch = xt.expand(3 * b, -1, -1, -1)
         timestep_batch = timestep.expand(3 * b)
+        tc = context["timestep_cond"]
+        tc_batch = tc.expand(3 * b, -1) if tc is not None else None
 
         prepared.use_base()
         prepared.component.eval()
@@ -1298,7 +1305,7 @@ class SpaceSDAdapter(BaseESDAdapter):
                 xt_batch,
                 timestep_batch,
                 encoder_hidden_states=batch_emb,
-                timestep_cond=context["timestep_cond"],
+                timestep_cond=tc_batch,
                 cross_attention_kwargs=None,
                 added_cond_kwargs=None,
                 return_dict=False,
