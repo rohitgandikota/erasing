@@ -70,7 +70,9 @@ class ESDConfig:
     allow_tf32: bool = False
     gradient_clip_norm: Optional[float] = None
     protect_concept: Optional[str] = None
+    protect_concepts_k: Optional[List[str]] = None  # K>1 protection concepts for GS
     space_pairs_path: Optional[str] = None
+    pres_lambda: float = 1.0  # weight for preservation loss (0 disables it)
 
     @property
     def erase_from_effective(self) -> str:
@@ -1245,14 +1247,21 @@ class SpaceSDAdapter(BaseESDAdapter):
                 )
                 anchor_embeds.append(a_emb.to(config.device))
 
-            protect_emb, _ = pipe.encode_prompt(
-                prompt=protect_prompt,
-                device=config.device,
-                num_images_per_prompt=config.batch_size,
-                do_classifier_free_guidance=False,
-                negative_prompt="",
+            # K protection concepts: CLI override > JSON "protect_k" > fallback to single "protect"
+            protect_prompts_k = (
+                config.protect_concepts_k
+                or pairs_data.get("protect_k", [protect_prompt])
             )
-            protect_embed = protect_emb.to(config.device)
+            protect_embeds_k = []
+            for pp in protect_prompts_k:
+                p_emb, _ = pipe.encode_prompt(
+                    prompt=pp,
+                    device=config.device,
+                    num_images_per_prompt=config.batch_size,
+                    do_classifier_free_guidance=False,
+                    negative_prompt="",
+                )
+                protect_embeds_k.append(p_emb.to(config.device))
 
         alphas_cumprod = pipe.scheduler.alphas_cumprod.to(config.device)
 
@@ -1270,7 +1279,8 @@ class SpaceSDAdapter(BaseESDAdapter):
             "resolution": resolution,
             "concept_embeds": concept_embeds,
             "anchor_embeds": anchor_embeds,
-            "protect_embed": protect_embed,
+            "protect_embed": protect_embeds_k[0],   # backward compat
+            "protect_embeds_k": protect_embeds_k,   # full list for K-GS + pres loss
             "alphas_cumprod": alphas_cumprod,
             "timestep_cond": timestep_cond,
         }
@@ -1290,23 +1300,22 @@ class SpaceSDAdapter(BaseESDAdapter):
 
         timestep = torch.tensor([t], device=config.device, dtype=torch.long)
 
-        concept_emb = context["concept_embeds"][i]   # (b, 77, 768)
-        anchor_emb  = context["anchor_embeds"][i]
-        protect_emb = context["protect_embed"]
+        concept_emb      = context["concept_embeds"][i]   # (b, 77, 768)
+        anchor_emb       = context["anchor_embeds"][i]
+        protect_embeds_k = context["protect_embeds_k"]    # list of K tensors
 
-        # Batch the 3 frozen forward passes for efficiency
-        batch_emb = torch.cat([concept_emb, anchor_emb, protect_emb], dim=0)  # (3b, 77, 768)
-        xt_batch = xt.expand(3 * b, -1, -1, -1)
-        timestep_batch = timestep.expand(3 * b)
+        # Batch concept + anchor frozen forward passes together for efficiency
+        batch_emb = torch.cat([concept_emb, anchor_emb], dim=0)  # (2b, 77, 768)
+        xt_batch  = xt.expand(2 * b, -1, -1, -1)
         tc = context["timestep_cond"]
-        tc_batch = tc.expand(3 * b, -1) if tc is not None else None
+        tc_batch = tc.expand(2 * b, -1) if tc is not None else None
 
         prepared.use_base()
         prepared.component.eval()
         with torch.no_grad():
             preds = prepared.component(
                 xt_batch,
-                timestep_batch,
+                timestep.expand(2 * b),
                 encoder_hidden_states=batch_emb,
                 timestep_cond=tc_batch,
                 cross_attention_kwargs=None,
@@ -1315,26 +1324,36 @@ class SpaceSDAdapter(BaseESDAdapter):
             )[0]
             eps_concept = preds[0:b]
             eps_anchor  = preds[b:2*b]
-            eps_protect = preds[2*b:3*b]
 
         # Style direction: eps(concept) - eps(anchor) isolates the attribute
-        d_style   = eps_concept - eps_anchor
-        pres_dir  = eps_protect - eps_anchor
+        d_style = eps_concept - eps_anchor
 
-        # K=1 Gram-Schmidt: remove the component of d_style along pres_dir
-        d_flat = d_style.reshape(-1).float()
-        p_flat = pres_dir.reshape(-1).float()
-        dot_dp = torch.dot(d_flat, p_flat)
-        dot_pp = torch.dot(p_flat, p_flat) + 1e-8
-        d_proj = d_style - (dot_dp / dot_pp) * pres_dir
+        # K-step Gram-Schmidt: sequentially project out each protection direction
+        d_proj = d_style
+        with torch.no_grad():
+            for k_emb in protect_embeds_k:
+                eps_prot_k = prepared.component(
+                    xt,
+                    timestep,
+                    encoder_hidden_states=k_emb,
+                    timestep_cond=tc,
+                    cross_attention_kwargs=None,
+                    added_cond_kwargs=None,
+                    return_dict=False,
+                )[0]
+                pres_dir_k = eps_prot_k - eps_anchor
+                d_flat = d_proj.reshape(-1).float()
+                p_flat = pres_dir_k.reshape(-1).float()
+                dot_dp = torch.dot(d_flat, p_flat)
+                dot_pp = torch.dot(p_flat, p_flat) + 1e-8
+                d_proj = d_proj - (dot_dp / dot_pp) * pres_dir_k
 
-        # Normalize d_proj to unit norm so η controls step size independent of
-        # the small magnitude of the semantic anchor direction (ε(concept)-ε(anchor)
-        # is much smaller than ESD's ε(concept)-ε(null) reference).
-        d_proj_norm = d_proj / (d_proj.norm() + 1e-8)
+        # Rescale d_proj back to d_style's original magnitude — GS only changes
+        # direction, the magnitude loss is an unintended side effect we undo here.
+        d_proj_rescaled = d_proj * (d_style.norm() / (d_proj.norm() + 1e-8))
 
-        # Target: steer concept prompts to anchor behaviour, then push further away
-        target = eps_anchor - config.negative_guidance * d_proj_norm
+        # Target: steer concept prompts to anchor behaviour, then push η steps away
+        target = eps_anchor - config.negative_guidance * d_proj_rescaled
 
         # Student forward (trainable to_k + to_v only)
         prepared.use_student()
@@ -1343,13 +1362,47 @@ class SpaceSDAdapter(BaseESDAdapter):
             xt,
             timestep,
             encoder_hidden_states=concept_emb,
-            timestep_cond=context["timestep_cond"],
+            timestep_cond=tc,
             cross_attention_kwargs=None,
             added_cond_kwargs=None,
             return_dict=False,
         )[0]
 
-        return StepResult(model_pred=model_pred, target=target, timestep_index=t)
+        # Preservation loss: keep student behaviour frozen on a random protection concept
+        pres_loss = None
+        if config.pres_lambda > 0.0:
+            k_idx    = random.randint(0, len(protect_embeds_k) - 1)
+            pres_emb = protect_embeds_k[k_idx]
+
+            prepared.use_base()
+            prepared.component.eval()
+            with torch.no_grad():
+                eps_pres_frozen = prepared.component(
+                    xt,
+                    timestep,
+                    encoder_hidden_states=pres_emb,
+                    timestep_cond=tc,
+                    cross_attention_kwargs=None,
+                    added_cond_kwargs=None,
+                    return_dict=False,
+                )[0]
+
+            prepared.use_student()
+            prepared.component.train()
+            eps_pres_student = prepared.component(
+                xt,
+                timestep,
+                encoder_hidden_states=pres_emb.to(dtype=config.torch_dtype),
+                timestep_cond=tc,
+                cross_attention_kwargs=None,
+                added_cond_kwargs=None,
+                return_dict=False,
+            )[0]
+
+            pres_loss = F.mse_loss(eps_pres_student.float(), eps_pres_frozen.float())
+
+        metrics = {} if pres_loss is None else {"pres_loss": pres_loss}
+        return StepResult(model_pred=model_pred, target=target, timestep_index=t, metrics=metrics)
 
     def build_checkpoint_path(self, config: ESDConfig) -> str:
         filename = f"space-{sanitize_checkpoint_name(config.erase_concept)}-esdxstrict.safetensors"
@@ -1404,6 +1457,8 @@ def run_esd_training(config: ESDConfig) -> str:
         optimizer.zero_grad(set_to_none=True)
         step_result = adapter.training_step(pipe, prepared, context, config)
         loss = F.mse_loss(step_result.model_pred.float(), step_result.target.float())
+        if step_result.metrics.get("pres_loss") is not None:
+            loss = loss + config.pres_lambda * step_result.metrics["pres_loss"]
         loss.backward()
         if config.gradient_clip_norm is not None:
             torch.nn.utils.clip_grad_norm_(list(prepared.parameters()), config.gradient_clip_norm)

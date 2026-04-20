@@ -1,6 +1,11 @@
 {
   "concept": "Van Gogh",
   "protect": "Claude Monet",
+  "protect_k": [
+    "a painting in the style of Claude Monet",
+    "a painting in the style of Paul Cézanne",
+    "a painting in the style of Pierre-Auguste Renoir"
+  ],
   "pairs": [
     {"concept": "a painting in the style of Van Gogh", "anchor": "a painting"},
     {"concept": "an oil painting by Van Gogh", "anchor": "an oil painting"},
