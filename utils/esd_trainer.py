@@ -14,19 +14,15 @@ from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional
 import numpy as np
 import torch
 import torch.nn.functional as F
-from diffusers import FluxPipeline, StableDiffusionPipeline, StableDiffusionXLPipeline
-from diffusers.pipelines.flux.pipeline_flux import calculate_shift, retrieve_timesteps as retrieve_flux_timesteps
+from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
 from tqdm.auto import tqdm
 
 from utils.esd_checkpoint import save_esd_checkpoint
-from utils.flux_utils import esd_flux_call
-from utils.flux2_klein_utils import (
-    compute_empirical_mu,
-    esd_flux2_klein_call,
-    retrieve_flux2_klein_timesteps,
-)
 from utils.sd_utils import esd_sd_call
 from utils.sdxl_utils import esd_sdxl_call
+
+# FLUX imports are lazy (inside adapter methods) — older diffusers builds used
+# for SD/SDXL/SPACE don't have FluxIPAdapterMixin and would fail at import time.
 
 
 TARGET_MODULE_TYPES = {
@@ -722,6 +718,7 @@ class FluxESDAdapter(BaseESDAdapter):
         return 1e-4
 
     def load_pipeline(self, config: ESDConfig):
+        from diffusers import FluxPipeline  # lazy: not available in older diffusers builds
         # No VAE for ESD (unlike DreamBooth): training latents come only from the transformer
         # sampling loop (`esd_flux_call` with `output_type="latent"`), never from pixel encode/decode.
         # `vae=None` skips loading the VAE; `FluxPipeline` still sets `vae_scale_factor` (default 8) for geometry.
@@ -808,6 +805,8 @@ class FluxESDAdapter(BaseESDAdapter):
         }
 
     def get_training_timesteps(self, pipe, num_inference_steps: int, image_seq_len: int, device: str):
+        from diffusers.pipelines.flux.pipeline_flux import calculate_shift
+        from diffusers.pipelines.flux.pipeline_flux import retrieve_timesteps as retrieve_flux_timesteps
         sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
         if getattr(pipe.scheduler.config, "use_flow_sigmas", False):
             sigmas = None
@@ -829,6 +828,8 @@ class FluxESDAdapter(BaseESDAdapter):
         return timesteps
 
     def training_step(self, pipe, prepared: PreparedComponent, context: Dict[str, Any], config: ESDConfig) -> StepResult:
+        from diffusers import FluxPipeline  # lazy
+        from utils.flux_utils import esd_flux_call  # lazy
         run_till_timestep = random.randint(0, config.num_inference_steps - 1)
         seed = random.randint(0, 2**15)
 
@@ -1052,6 +1053,7 @@ class Flux2KleinESDAdapter(BaseESDAdapter):
         }
 
     def get_training_timesteps(self, pipe, num_inference_steps: int, image_seq_len: int, device: str):
+        from utils.flux2_klein_utils import compute_empirical_mu, retrieve_flux2_klein_timesteps  # lazy
         sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
         if getattr(pipe.scheduler.config, "use_flow_sigmas", False):
             sigmas = None
@@ -1067,6 +1069,7 @@ class Flux2KleinESDAdapter(BaseESDAdapter):
         return timesteps
 
     def training_step(self, pipe, prepared: PreparedComponent, context: Dict[str, Any], config: ESDConfig) -> StepResult:
+        from utils.flux2_klein_utils import esd_flux2_klein_call  # lazy
         run_till_timestep = random.randint(0, config.num_inference_steps - 1)
         seed = random.randint(0, 2**15)
 
