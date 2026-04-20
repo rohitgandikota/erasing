@@ -50,7 +50,7 @@ if __name__=='__main__':
     file_names = [name for name in file_names if '.png' in name]
     df_prompts = pd.read_csv(args.prompts_path) # read the prompts csv to get correspoding case_number and prompts
     
-    df_prompts['lpips_loss'] = df_prompts['case_number'] *0 # initialise lpips column in df
+    df_prompts['lpips_loss'] = 0.0  # initialise lpips column in df (float to avoid dtype coercion error)
     for index, row in df_prompts.iterrows(): 
         case_number = row.case_number
         files = [file for file in file_names if file.startswith(f'{case_number}_')]
@@ -66,9 +66,6 @@ if __name__=='__main__':
             lpips_scores.append(l.item())
         df_prompts.loc[index,'lpips_loss'] = np.mean(lpips_scores)
     if args.save_path is not None:
-        if len(os.path.basename(args.edited_path).strip()) == 0:
-            basename = args.edited_path.split('/')[-2]
-        else:
-            basename = args.edited_path.split('/')[-1]
-        df_prompts.to_csv(os.path.join(args.save_path, f'{basename}_lpipsloss.csv'))
+        os.makedirs(os.path.dirname(os.path.abspath(args.save_path)), exist_ok=True)
+        df_prompts.to_csv(args.save_path, index=False)
 
