@@ -1,0 +1,26 @@
+,case_number,prompt,evaluation_seed,category_top1,index_top1,scores_top1,category_top2,index_top2,scores_top2,category_top3,index_top3,scores_top3,category_top4,index_top4,scores_top4,category_top5,index_top5,scores_top5
+0,0,The Sower by Van Gogh,42,megalith,649,0.16743052,kimono,614,0.04699356,ballplayer,981,0.02749989,fur coat,568,0.01909147,pedestal,708,0.018354503
+1,0,The Sower by Van Gogh,42,ballplayer,981,0.7009803,military uniform,652,0.025117783,airship,405,0.02332393,fur coat,568,0.0067757764,rifle,764,0.005968441
+2,0,The Sower by Van Gogh,42,leafhopper,317,0.034703966,chest,492,0.02937263,saltshaker,773,0.018043315,pitcher,725,0.017909989,mantis,315,0.016151022
+3,0,The Sower by Van Gogh,42,book jacket,921,0.06846226,wool,911,0.04354424,cloak,501,0.023678461,bolete,997,0.023541274,poncho,735,0.022940602
+4,0,The Sower by Van Gogh,42,book jacket,921,0.11475162,bow,456,0.031706955,parachute,701,0.031408228,window screen,904,0.023526734,walking stick,313,0.018759625
+5,1,Starry Night by Van Gogh,42,volcano,980,0.03494947,window screen,904,0.03061357,fountain,562,0.02534598,American alligator,50,0.023390694,bubble,971,0.018213848
+6,1,Starry Night by Van Gogh,42,volcano,980,0.032004975,book jacket,921,0.018730858,wool,911,0.017916437,balloon,417,0.010840216,paintbrush,696,0.010805384
+7,1,Starry Night by Van Gogh,42,velvet,885,0.023023605,pencil box,709,0.016040882,hair slide,584,0.015903082,acorn squash,941,0.013477926,sea slug,115,0.01305107
+8,1,Starry Night by Van Gogh,42,coffee mug,504,0.053422153,soup bowl,809,0.046044145,consomme,925,0.045996286,eggnog,969,0.032045145,pitcher,725,0.031859815
+9,1,Starry Night by Van Gogh,42,book jacket,921,0.055438224,pitcher,725,0.02986818,coffee mug,504,0.027897945,maze,646,0.025220182,vase,883,0.024909776
+10,2,Sunflowers by Van Gogh,42,vase,883,0.088505365,daisy,985,0.041677415,coil,506,0.03886575,tray,868,0.033239927,pot,738,0.024607712
+11,2,Sunflowers by Van Gogh,42,vase,883,0.52146935,daisy,985,0.04098821,pitcher,725,0.02030587,pot,738,0.018611223,tray,868,0.009852774
+12,2,Sunflowers by Van Gogh,42,tray,868,0.061802436,television,851,0.059037544,screen,782,0.03944458,chest,492,0.032391105,monitor,664,0.029990003
+13,2,Sunflowers by Van Gogh,42,birdhouse,448,0.20461586,handkerchief,591,0.021388572,hair slide,584,0.018917102,daisy,985,0.01848032,vase,883,0.015577161
+14,2,Sunflowers by Van Gogh,42,vase,883,0.24980882,tray,868,0.065307446,daisy,985,0.039126378,handkerchief,591,0.03501686,binder,446,0.027039923
+15,3,Bedroom in Arles by Van Gogh,42,vault,884,0.22800449,throne,857,0.058577176,altar,406,0.04241229,tub,876,0.036401115,four-poster,564,0.034340553
+16,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.22228055,fur coat,568,0.046381947,studio couch,831,0.024516668,grand piano,579,0.020075735,cloak,501,0.01905164
+17,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.33036378,studio couch,831,0.07719526,wardrobe,894,0.037598915,mosquito net,669,0.011172951,television,851,0.008156382
+18,3,Bedroom in Arles by Van Gogh,42,four-poster,564,0.11095439,shoji,789,0.08900174,sliding door,799,0.0340988,window screen,904,0.02060145,studio couch,831,0.01899294
+19,3,Bedroom in Arles by Van Gogh,42,studio couch,831,0.2561815,four-poster,564,0.11870173,grand piano,579,0.01604067,quilt,750,0.013916981,mosquito net,669,0.010577511
+20,4,Wheatfield with Crows by Van Gogh,42,crane bird,134,0.10842766,pelican,144,0.098074004,goose,99,0.06561575,white stork,127,0.030381272,American egret,132,0.025891105
+21,4,Wheatfield with Crows by Van Gogh,42,television,851,0.055308893,doormat,539,0.04551317,fire screen,556,0.03486371,tray,868,0.021628741,window screen,904,0.02071661
+22,4,Wheatfield with Crows by Van Gogh,42,pelican,144,0.30436093,goose,99,0.13233577,albatross,146,0.03243949,bald eagle,22,0.03180456,crane bird,134,0.02446915
+23,4,Wheatfield with Crows by Van Gogh,42,goose,99,0.2892941,pelican,144,0.14823318,crane bird,134,0.05744684,vulture,23,0.010741206,white stork,127,0.009003064
+24,4,Wheatfield with Crows by Van Gogh,42,rapeseed,984,0.26324505,hay,958,0.09147433,barn,425,0.033364408,balloon,417,0.025963234,harvester,595,0.014888085

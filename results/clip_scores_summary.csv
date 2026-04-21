@@ -1,0 +1,4 @@
+model,mean_clip_score,mean_style_delta,n_images
+sdv14,0.2538,0.045,25
+diffusers-VanGogh-ESDx1-UNET,0.1772,0.0093,25
+space-Van_Gogh-esdx,0.2071,0.0038,25

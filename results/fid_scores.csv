@@ -1,3 +1,3 @@
 model,fid,n_images,reference
 diffusers-VanGogh-ESDx1-UNET,351.78,25,sdv14
-space-Van_Gogh-esdxstrict,697.68,25,sdv14
+space-Van_Gogh-esdx,367.61,25,sdv14

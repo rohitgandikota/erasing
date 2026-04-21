@@ -23,21 +23,20 @@
 
 set -euo pipefail
 
-WORKDIR="/workspace/erasing"
+WORKDIR="/workspace/erasing-space"
 BASE_MODEL="CompVis/stable-diffusion-v1-4"
 PROMPTS="$WORKDIR/runpod/vangogh_prompts.csv"
 OUTPUTS="$WORKDIR/outputs"
 RESULTS="$WORKDIR/results"
 ESD_WEIGHTS="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.safetensors"
-SPACE_WEIGHTS="$WORKDIR/esd-models/space/space-Van_Gogh-esdxstrict.safetensors"
-SPACE_OUTPUT_DIR="$OUTPUTS/space-Van_Gogh-esdxstrict"
+SPACE_WEIGHTS="$WORKDIR/esd-models/space/space-Van_Gogh-esdx.safetensors"
+SPACE_OUTPUT_DIR="$OUTPUTS/space-Van_Gogh-esdx"
 CONCEPT_TEXT="a painting in the style of Van Gogh"
 
 cd "$WORKDIR"
 
 # ── git pull to get latest code ───────────────────────────────────────────────
 echo "==> Pulling latest code..."
-git pull origin main
 
 # ── install deps (never touch torch/torchvision — use pod's pre-installed CUDA build) ──
 echo "==> Installing/verifying deps..."
@@ -107,13 +106,14 @@ fi
 if [ -f "$SPACE_WEIGHTS" ]; then
   echo "==> SPACE checkpoint already present — skipping training."
 else
-  echo "==> Training SPACE (Van Gogh, 1000 steps, η=5.0)..."
+  echo "==> Training SPACE (Van Gogh, 1000 steps, eta=2.0, esd-x surface)..."
   python3 space_sd.py \
     --erase_concept "Van Gogh" \
     --space_pairs_path data/space_pairs/vangogh.json \
-    --eta 5.0 \
+    --eta 2.0 \
     --iterations 1000 \
-    --lr 1e-5 \
+    --lr 2e-5 \
+    --train_method esd-x \
     --save_path "esd-models/space" \
     --gradient_clip_norm 1.0 \
     --device cuda:0

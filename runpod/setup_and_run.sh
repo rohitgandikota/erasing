@@ -16,7 +16,7 @@ fi
 REPO_URL="https://github.com/Vedang-P/erasing.git"
 WEIGHTS_URL="https://erasing.baulab.info/weights/esd_models/art/diffusers-VanGogh-ESDx1-UNET.pt"
 BASE_MODEL="CompVis/stable-diffusion-v1-4"
-WORKDIR="/workspace/erasing"
+WORKDIR="/workspace/erasing-space"
 WEIGHTS_PT="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.pt"
 WEIGHTS_ST="$WORKDIR/esd-models/art/diffusers-VanGogh-ESDx1-UNET.safetensors"
 PROMPTS="$WORKDIR/runpod/vangogh_prompts.csv"
